@@ -101,10 +101,23 @@ def test_the_interval_of_the_settings_sets_the_timer(ctx) -> None:
         notifications.settings, notifications.apply_settings
     )
     panel.load()
-    assert panel.interval.value() == 30
-    panel.interval.setValue(120)
+    assert panel.interval.currentData() == 30
+    panel.interval.setCurrentIndex(panel.interval.findData(120))
     assert panel.save() is True
     assert notifications.timer.interval() == 120000
+
+
+def test_a_time_that_is_not_one_of_the_usual_is_kept_in_the_list(ctx) -> None:
+    ctx.settings["interval"] = 45
+    notifications = build(ctx)
+    panel = NotificationSettingsPanel(
+        notifications.settings, notifications.apply_settings
+    )
+
+    panel.load()
+
+    assert panel.interval.currentData() == 45
+    assert panel.interval.currentText() == "45 seconds"
 
 
 def test_activating_it_wires_the_events_the_settings_and_the_cleanup(

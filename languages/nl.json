@@ -14,8 +14,16 @@
             "{amount}{unit} ago": ""
         },
         "NotificationSettingsPanel": {
-            "How often the events of the cluster are read, in seconds.": "",
-            "Look for new events every": ""
+            "1 hour": "",
+            "1 minute": "",
+            "15 minutes": "",
+            "15 seconds": "",
+            "2 minutes": "",
+            "30 seconds": "",
+            "5 minutes": "",
+            "How often the events of the cluster are read.": "",
+            "Look for new events every": "",
+            "{seconds} seconds": ""
         },
         "NotificationsExtension": {
             "Notifications": ""

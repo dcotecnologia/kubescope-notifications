@@ -14,8 +14,16 @@
             "{amount}{unit} ago": "há {amount}{unit}"
         },
         "NotificationSettingsPanel": {
-            "How often the events of the cluster are read, in seconds.": "De quanto em quanto tempo os eventos do cluster são lidos, em segundos.",
-            "Look for new events every": "Buscar novos eventos a cada"
+            "1 hour": "1 hora",
+            "1 minute": "1 minuto",
+            "15 minutes": "15 minutos",
+            "15 seconds": "15 segundos",
+            "2 minutes": "2 minutos",
+            "30 seconds": "30 segundos",
+            "5 minutes": "5 minutos",
+            "How often the events of the cluster are read.": "De quanto em quanto tempo os eventos do cluster são lidos.",
+            "Look for new events every": "Buscar novos eventos a cada",
+            "{seconds} seconds": "{seconds} segundos"
         },
         "NotificationsExtension": {
             "Notifications": "Notificações"
