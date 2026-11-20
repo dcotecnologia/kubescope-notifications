@@ -151,3 +151,26 @@ def test_esc_closes_it_only_while_it_is_open() -> None:
 
     assert closed == [True] and not panel.opened
     assert not panel._escape.isEnabled()
+
+
+def test_a_notice_of_the_app_shows_its_title_and_how_serious_it_is(tmp_path) -> None:
+    from kubescope.notifications.store import NotificationStore
+
+    store = NotificationStore(tmp_path / "n.json")
+    store.add_notice(
+        "info",
+        "KubeScope update available",
+        "Version 9 is available",
+        "u",
+        False,
+        100.0,
+    )
+    store.add_notice("error", "Boom", "it broke", "e", False, 100.0)
+    panel = make_panel()
+
+    panel.show_items(store.items(), now=160.0)
+
+    shown = texts(panel)
+    assert "KubeScope update available" in shown and "Info" in shown
+    assert "Boom" in shown and "Error" in shown
+    assert "Version 9 is available" in shown

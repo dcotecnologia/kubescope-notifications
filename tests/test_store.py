@@ -125,3 +125,60 @@ def test_the_interval_is_kept_between_what_is_reasonable() -> None:
     assert settings.interval == DEFAULT
     saved["interval"] = True
     assert settings.interval == DEFAULT
+
+
+def test_a_notice_of_the_app_is_one_notification_that_counts_when_it_repeats(
+    tmp_path,
+) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+
+    assert store.add_notice("error", "Boom", "it broke", "e1", True, 10.0)
+    assert store.add_notice("error", "Boom", "it broke", "e1", True, 20.0)
+
+    (only,) = store.items()
+    assert (only.source, only.level, only.reason, only.message) == (
+        "app",
+        "error",
+        "Boom",
+        "it broke",
+    )
+    assert (only.count, only.first_seen, only.last_seen) == (2, 10.0, 20.0)
+
+
+def test_an_update_is_told_once_and_a_second_time_changes_nothing(tmp_path) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+
+    assert store.add_notice("info", "Update", "9.9.9", "update:9.9.9", False, 5.0)
+    assert not store.add_notice("info", "Update", "9.9.9", "update:9.9.9", False, 50.0)
+
+    (only,) = store.items()
+    assert (only.level, only.count, only.last_seen) == ("info", 1, 5.0)
+
+
+def test_an_unknown_level_is_a_warning_and_the_notices_are_trimmed(tmp_path) -> None:
+    store = NotificationStore(tmp_path / "n.json", limit=2)
+
+    store.add_notice("loud", "A", "a", "a", False, 1.0)
+    store.add_notice("error", "B", "b", "b", False, 2.0)
+    store.add_notice("error", "C", "c", "c", False, 3.0)
+
+    assert [item.reason for item in store.items()] == ["C", "B"]
+    assert store.items()[-1].level == "error"
+    store.add_notice("loud", "D", "d", "d", False, 4.0)
+    assert store.items()[0].level == "warning"
+
+
+def test_a_file_from_before_the_notices_of_the_app_still_loads(
+    tmp_path, make_event
+) -> None:
+    path = tmp_path / "n.json"
+    old = NotificationStore(path)
+    old.merge("prod", [make_event()])
+    document = json.loads(path.read_text(encoding="utf-8"))
+    for item in document["items"]:
+        del item["source"]  # what an older version wrote
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    (item,) = NotificationStore(path).items()
+
+    assert item.source == "cluster"

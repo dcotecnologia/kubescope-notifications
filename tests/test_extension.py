@@ -161,3 +161,44 @@ def test_closing_it_stops_the_timer(ctx) -> None:
     notifications.close()
 
     assert not notifications.timer.isActive()
+
+
+def test_the_app_tells_an_error_and_an_update_and_the_bell_counts_them(ctx) -> None:
+    activate(ctx)  # type: ignore[arg-type]
+
+    ctx.events.fire(
+        "notification",
+        level="error",
+        title="Boom",
+        message="it broke",
+        key="e",
+        repeat=True,
+    )
+    ctx.events.fire(
+        "notification",
+        level="info",
+        title="Update",
+        message="9.9.9",
+        key="u",
+        repeat=False,
+    )
+    ctx.events.fire(
+        "notification",
+        level="info",
+        title="Update",
+        message="9.9.9",
+        key="u",
+        repeat=False,
+    )  # the same update again: nothing changes
+
+    bell = ctx.ui.buttons[0][1]
+    assert bell.unread == 2
+
+
+def test_notice_is_for_what_the_app_tells(ctx) -> None:
+    notifications = build(ctx)
+
+    notifications.notice("warning", "Careful", "m", "k")
+    notifications.notice("warning", "Careful", "m", "k")  # not repeated by default
+
+    assert [item.count for item in notifications.store.items()] == [1]

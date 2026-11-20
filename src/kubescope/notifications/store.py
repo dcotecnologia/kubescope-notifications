@@ -17,6 +17,10 @@ from kubescope.sdk.models import ClusterEvent
 LIMIT = 500  # the notifications kept; the oldest go first
 ERROR = "error"
 WARNING = "warning"
+INFO = "info"  # an update of the app
+APP = "app"  # where a notice of the app came from, as the cluster is "cluster"
+CLUSTER = "cluster"
+LEVELS = (ERROR, WARNING, INFO)
 
 # The reasons a Warning event gives when something failed, not only when it
 # could happen: Kubernetes has no level above Warning.
@@ -53,6 +57,7 @@ class Notification:
     count: int
     first_seen: float
     last_seen: float
+    source: str = CLUSTER
 
 
 def level_of(event: ClusterEvent) -> str:
@@ -118,6 +123,51 @@ class NotificationStore:
             json.dump(document, handle, ensure_ascii=False)
         temporary.replace(self.path)
 
+    def add_notice(
+        self,
+        level: str,
+        title: str,
+        message: str,
+        key: str,
+        repeat: bool,
+        moment: float,
+    ) -> bool:
+        """Add a notice of the app itself: an error, a warning or an update.
+
+        The same `key` again is the same notice, which counts once more when
+        `repeat` is set and is left alone otherwise. True when something
+        changed.
+        """
+        identity = f"{APP}\n{key}"
+        before = self._items.get(identity)
+        if before is not None and not repeat:
+            return False
+        self._items[identity] = Notification(
+            key=identity,
+            context="",
+            level=level if level in LEVELS else WARNING,
+            reason=title,
+            namespace="",
+            kind="",
+            name="",
+            message=message,
+            count=before.count + 1 if before else 1,
+            first_seen=before.first_seen if before else moment,
+            last_seen=moment,
+            source=APP,
+        )
+        self._trim()
+        self.save()
+        return True
+
+    def _trim(self) -> None:
+        """Keep the newest `limit`; the oldest go first."""
+        if len(self._items) > self.limit:
+            newest = sorted(self._items.values(), key=lambda one: one.last_seen)[
+                -self.limit :
+            ]
+            self._items = {one.key: one for one in newest}
+
     def merge(self, context: str, events: list[ClusterEvent]) -> int:
         """Add what the events of `context` bring; the number of notifications
         that are new or that happened again since the person looked."""
@@ -129,11 +179,7 @@ class NotificationStore:
                 if item.last_seen > self.read_until:
                     fresh += 1
                 self._items[item.key] = item
-        if len(self._items) > self.limit:
-            newest = sorted(self._items.values(), key=lambda one: one.last_seen)[
-                -self.limit :
-            ]
-            self._items = {one.key: one for one in newest}
+        self._trim()
         self.save()
         return fresh
 

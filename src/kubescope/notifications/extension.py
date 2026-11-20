@@ -6,6 +6,7 @@ from collections.abc import Callable
 
 from kubescope.sdk import (
     CONTEXT_CHANGED,
+    NOTIFICATION,
     SHUTDOWN,
     THEME_CHANGED,
     Context,
@@ -106,6 +107,13 @@ class Notifications(QObject):
         self.bell.set_unread(0)
         self.store.mark_read(self._now())
 
+    def notice(
+        self, level: str, title: str, message: str, key: str, repeat: bool = False
+    ) -> None:
+        """The app tells about an error, a warning or an update."""
+        if self.store.add_notice(level, title, message, key, repeat, self._now()):
+            self.refresh()
+
     def mark_read(self) -> None:
         self.store.mark_read(self._now())
         self.refresh()
@@ -138,6 +146,7 @@ def activate(ctx: Context) -> None:
     notifications = Notifications(ctx, settings, store)
     ctx.events.on(CONTEXT_CHANGED, lambda context: notifications.context_changed())
     ctx.events.on(THEME_CHANGED, notifications.restyle)
+    ctx.events.on(NOTIFICATION, notifications.notice)
     ctx.events.on(SHUTDOWN, notifications.close)
     ctx.add_settings_section(
         TITLE,

@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope.notifications.store import ERROR, Notification
+from kubescope.notifications.store import ERROR, INFO, Notification
 
 WIDTH = 400
 SHOWN = 200  # the cards drawn; the store keeps more
@@ -62,6 +62,9 @@ QFrame#notificationCard {{
 QFrame#notificationCard[level="error"] {{
     border-left: 3px solid {themed("#a33d45", False)};
 }}
+QFrame#notificationCard[level="info"] {{
+    border-left: 3px solid {themed("#3220a0", False)};
+}}
 QFrame#notificationCard[level="warning"] {{
     border-left: 3px solid {themed("#985415", False)};
 }}
@@ -88,11 +91,10 @@ class Card(QFrame):
             item.reason or QCoreApplication.translate("NotificationPanel", "Event")
         )
         reason.setObjectName("notificationReason")
-        level = (
-            QCoreApplication.translate("NotificationPanel", "Error")
-            if item.level == ERROR
-            else QCoreApplication.translate("NotificationPanel", "Warning")
-        )
+        level = {
+            ERROR: QCoreApplication.translate("NotificationPanel", "Error"),
+            INFO: QCoreApplication.translate("NotificationPanel", "Info"),
+        }.get(item.level, QCoreApplication.translate("NotificationPanel", "Warning"))
         kind = QLabel(level)
         kind.setObjectName("notificationMeta")
         head.addWidget(reason)

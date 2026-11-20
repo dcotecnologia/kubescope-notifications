@@ -26,6 +26,7 @@ and nothing else of the app. Install it in **Settings → Extensions**.
   and the others as warnings.
 - **One notification for an event that repeats.** It keeps the count and the time of the last time, instead of
   a new line each time.
+- **What the app itself tells.** The errors KubeScope shows in its banner, the warnings and errors of its message boxes and the notice of a **new version** of the app are listed too, with the same bell (an update is told once per version; an error that repeats counts instead of piling up).
 - **A bell with a count.** The red number is what happened since you last opened the panel.
 - **A panel that slides in.** Click the bell: the list opens from the right, the newest first, with the object,
   the namespace, the message and how long ago. **Mark all as read** and **Clear** are in its header.
@@ -34,7 +35,7 @@ and nothing else of the app. Install it in **Settings → Extensions**.
 
 ## Requirements
 
-KubeScope 2.2 or newer (the extension API `0`) and the SDK 1.3 or newer, which the app brings.
+KubeScope 2.2 or newer (the extension API `0`) and the SDK 1.3 or newer (the notices of the app need the event `notification`), which the app brings.
 
 ## Install
 
