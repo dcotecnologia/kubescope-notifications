@@ -45,7 +45,9 @@ and nothing else of the app. Install it in **Settings → Extensions**.
   again, unless it is the same error coming back within 30 minutes, which only counts. The red number on the bell is
   how many are unread.
 - **A panel that slides in.** Click the bell: the list opens from the right, the newest first, with the object,
-  the namespace, the message and how long ago. **Mark all as read** and **Clear** are in its header.
+  the namespace, the message and how long ago. **Mark all as read** and **Clear** are in its header. What you clear does not come back with the next look at the cluster
+  (Kubernetes keeps an event for about an hour): it returns only when it happens again, and a context that was not signed in
+  is listed again only after it worked and failed again.
 - **A panel you can resize.** Drag its left edge to make it wider or narrower (300 to 900 px, as far as the window allows); the width is kept.
 - **A cache that survives a restart.** The notifications are kept on disk (at most 500), so they are there when
   you open the app.

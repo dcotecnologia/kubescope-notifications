@@ -16,6 +16,7 @@ from pathlib import Path
 from kubescope.sdk.models import ClusterEvent
 
 LIMIT = 500  # the notifications kept; the oldest go first
+DISMISSED_LIMIT = 2000  # alerts remembered as cleared; the oldest are forgotten
 ERROR = "error"
 WARNING = "warning"
 INFO = "info"  # an update of the app
@@ -109,16 +110,22 @@ class NotificationStore:
         self.path = path
         self.limit = limit
         self._items: dict[str, Notification] = {}
+        # the alerts the person cleared, and the time of the last one cleared:
+        # they come back only when they happen again after that
+        self._dismissed: dict[str, float] = {}
         self.read_until = 0.0
         self.load()
 
     def load(self) -> None:
         """Read the file; a missing or damaged one is an empty store."""
         self._items = {}
+        self._dismissed = {}
         self.read_until = 0.0
         try:
             document = json.loads(self.path.read_text(encoding="utf-8"))
             self.read_until = float(document.get("read_until", 0.0))
+            for key, moment in dict(document.get("dismissed", {})).items():
+                self._dismissed[str(key)] = float(moment)
             for raw in document.get("items", []):
                 item = Notification(**raw)
                 if item.source == CLUSTER and item.name:  # kept by an older rule
@@ -138,6 +145,7 @@ class NotificationStore:
                     self._items[item.key] = item
         except OSError, ValueError, TypeError, AttributeError:
             self._items = {}
+            self._dismissed = {}
             self.read_until = 0.0
 
     def save(self) -> None:
@@ -145,6 +153,7 @@ class NotificationStore:
         document = {
             "read_until": self.read_until,
             "items": [asdict(item) for item in self._items.values()],
+            "dismissed": self._dismissed,
         }
         self.path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.path.with_suffix(".tmp")
@@ -173,6 +182,13 @@ class NotificationStore:
         again. True when it is new, or news again.
         """
         identity = f"{APP}\n{key}"
+        cleared = self._dismissed.get(identity)
+        if cleared is not None:
+            # cleared by the person: gone for good unless it is the kind that
+            # repeats, and then only once the window since it was cleared is over
+            if not repeat or moment - cleared < window:
+                return False
+            del self._dismissed[identity]
         before = self._items.get(identity)
         if before is not None and not repeat:
             return False
@@ -218,7 +234,11 @@ class NotificationStore:
     def discard(self, key: str) -> bool:
         """Take a notice of the app away, the one added with that key; True
         when there was one."""
-        if self._items.pop(f"{APP}\n{key}", None) is None:
+        identity = f"{APP}\n{key}"
+        forgotten = self._dismissed.pop(identity, None) is not None
+        if self._items.pop(identity, None) is None:
+            if forgotten:
+                self.save()
             return False
         self.save()
         return True
@@ -239,6 +259,11 @@ class NotificationStore:
         changed: list[Notification] = []
         for event in events:
             item = notification_of(context, event)
+            cleared = self._dismissed.get(item.key)
+            if cleared is not None:
+                if item.last_seen <= cleared:
+                    continue  # the one the person cleared, still in the cluster
+                del self._dismissed[item.key]  # it happened again
             before = self._items.get(item.key)
             if before is None or item.last_seen > before.last_seen:
                 changed.append(item)
@@ -277,5 +302,11 @@ class NotificationStore:
         self.save()
 
     def clear(self) -> None:
+        """Forget every notification. What was cleared does not come back with
+        the next look at the cluster: only when it happens again."""
+        for key, item in self._items.items():
+            self._dismissed[key] = item.last_seen
+        newest = sorted(self._dismissed.items(), key=lambda pair: pair[1])
+        self._dismissed = dict(newest[-DISMISSED_LIMIT:])
         self._items = {}
         self.save()

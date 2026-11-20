@@ -621,3 +621,23 @@ def test_unloading_it_takes_its_bell_out_of_the_top_bar(ctx) -> None:
     QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
 
     assert not shiboken6.isValid(bell)
+
+
+def test_clearing_is_not_undone_by_the_next_look_at_the_clusters(
+    ctx, make_event
+) -> None:
+    ctx.cluster.contexts = ["prod", "dead"]
+    ctx.cluster.events = [make_event("a", name="api", last_seen=2000.0)]
+    ctx.cluster.failures["dead"] = RuntimeError("token expired")
+    notifications = build(ctx)
+    notifications.poll()
+    assert len(notifications.store.items()) == 2  # an event and a dead context
+
+    notifications.clear()
+    for _ in range(4):  # the cluster still has the event, the context is still dead
+        notifications.poll()
+    assert notifications.store.items() == []
+
+    ctx.cluster.events = [make_event("b", name="api", last_seen=2500.0)]
+    notifications.poll()
+    assert [item.name for item in notifications.store.items()] == ["api"]

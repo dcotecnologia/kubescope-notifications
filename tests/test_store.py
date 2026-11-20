@@ -299,3 +299,86 @@ def test_what_an_older_version_kept_by_uid_is_merged_when_it_loads(
 
     assert [item.name for item in items] == ["api", "web"] or len(items) == 2
     assert next(item for item in items if item.name == "api").last_seen == 99.0
+
+
+def test_what_was_cleared_does_not_come_back_with_the_next_look(
+    tmp_path, make_event
+) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+    store.merge_changes("prod", [make_event("a", name="api", last_seen=100.0)])
+    store.clear()
+
+    again = store.merge_changes("prod", [make_event("a", name="api", last_seen=100.0)])
+
+    assert again == [] and store.items() == []  # still in the cluster, but cleared
+
+
+def test_a_cleared_alert_comes_back_when_it_happens_again(tmp_path, make_event) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+    store.merge_changes("prod", [make_event("a", name="api", last_seen=100.0)])
+    store.clear()
+
+    again = store.merge_changes("prod", [make_event("b", name="api", last_seen=500.0)])
+    other = store.merge_changes("prod", [make_event("c", name="web", last_seen=50.0)])
+
+    assert len(again) == 1 and len(other) == 1  # one happened again, one is another
+    assert len(store.items()) == 2
+    store.merge_changes("prod", [make_event("d", name="api", last_seen=400.0)])
+    assert next(i for i in store.items() if i.name == "api").last_seen == 500.0
+
+
+def test_the_cleared_ones_are_remembered_between_runs(tmp_path, make_event) -> None:
+    path = tmp_path / "n.json"
+    store = NotificationStore(path)
+    store.merge_changes("prod", [make_event("a", name="api", last_seen=100.0)])
+    store.clear()
+
+    again = NotificationStore(path)
+    assert (
+        again.merge_changes("prod", [make_event("a", name="api", last_seen=100.0)])
+        == []
+    )
+
+    path.write_text('{"dismissed": "nope"}', encoding="utf-8")  # damaged
+    assert NotificationStore(path).items() == []
+
+
+def test_a_cleared_notice_of_the_app_stays_away_until_it_may_count_again(
+    tmp_path,
+) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+    store.add_notice("error", "Boom", "x", "e", True, 100.0, "prod", 1800.0)
+    store.add_notice("info", "Update", "9", "u", False, 100.0)
+    store.add_notice("warning", "Dead", "y", "d", False, 100.0, "dead")
+    store.clear()
+
+    assert not store.add_notice("error", "Boom", "x", "e", True, 200.0, "prod", 1800.0)
+    assert not store.add_notice("info", "Update", "9", "u", False, 9999.0)
+    assert not store.add_notice("warning", "Dead", "y", "d", False, 9999.0, "dead")
+    assert store.items() == []
+
+    assert store.add_notice("error", "Boom", "x", "e", True, 5000.0, "prod", 1800.0)
+    assert [item.reason for item in store.items()] == ["Boom"]  # the window is over
+
+
+def test_a_cleared_notice_is_forgotten_when_its_cause_goes_away(tmp_path) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+    store.add_notice("warning", "Dead", "y", "d", False, 100.0, "dead")
+    store.clear()
+
+    assert store.discard("d") is False  # nothing listed, but the clearing goes
+    assert store.add_notice("warning", "Dead", "y", "d", False, 200.0, "dead")
+
+
+def test_only_the_newest_cleared_ones_are_remembered(
+    tmp_path, make_event, monkeypatch
+) -> None:
+    from kubescope.notifications import store as module
+
+    monkeypatch.setattr(module, "DISMISSED_LIMIT", 3)
+    store = NotificationStore(tmp_path / "n.json")
+    for number in range(5):
+        store.add_notice("error", f"E{number}", "x", f"k{number}", False, float(number))
+    store.clear()
+
+    assert sorted(store._dismissed) == ["app\nk2", "app\nk3", "app\nk4"]
