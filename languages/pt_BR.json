@@ -1,0 +1,24 @@
+{
+    "name": "Português",
+    "rtl": false,
+    "strings": {
+        "NotificationPanel": {
+            "Clear": "Limpar",
+            "Error": "Erro",
+            "Event": "Evento",
+            "Mark all as read": "Marcar todas como lidas",
+            "Nothing to report. Warnings and errors will show here.": "Nada a reportar. Avisos e erros aparecerão aqui.",
+            "Notifications": "Notificações",
+            "Warning": "Aviso",
+            "just now": "agora há pouco",
+            "{amount}{unit} ago": "há {amount}{unit}"
+        },
+        "NotificationSettingsPanel": {
+            "How often the events of the cluster are read, in seconds.": "De quanto em quanto tempo os eventos do cluster são lidos, em segundos.",
+            "Look for new events every": "Buscar novos eventos a cada"
+        },
+        "NotificationsExtension": {
+            "Notifications": "Notificações"
+        }
+    }
+}

@@ -1,0 +1,24 @@
+{
+    "name": "हिन्दी",
+    "rtl": false,
+    "strings": {
+        "NotificationPanel": {
+            "Clear": "",
+            "Error": "",
+            "Event": "",
+            "Mark all as read": "",
+            "Nothing to report. Warnings and errors will show here.": "",
+            "Notifications": "",
+            "Warning": "",
+            "just now": "",
+            "{amount}{unit} ago": ""
+        },
+        "NotificationSettingsPanel": {
+            "How often the events of the cluster are read, in seconds.": "",
+            "Look for new events every": ""
+        },
+        "NotificationsExtension": {
+            "Notifications": ""
+        }
+    }
+}

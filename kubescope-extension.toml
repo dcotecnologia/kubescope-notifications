@@ -1,0 +1,8 @@
+id = "kubescope.notifications"
+name = "Notifications"
+version = "0.1.0"
+api = "0"
+entry = "kubescope.notifications:activate"
+description = "A bell in the top bar that keeps the Warning and Error events of the cluster and lists them, the newest first, in a panel that slides in from the right."
+author = "DCO Tecnologia"
+permissions = ["cluster.read", "ui.window", "ui.settings"]
