@@ -256,10 +256,9 @@ def test_new_events_are_told_to_the_system_in_one_notice_that_opens_the_panel(
     ((title, message, click),) = ctx.ui.system
     assert title == "BackOff"
     assert "Pod/api" in message and "prod" in message
-    click()
-    assert notifications.panel.opened
-    click()  # already open: it is left open
-    assert notifications.panel.opened
+    click()  # the one notice goes to the context it is about
+    assert [name for name, _ in ctx.invoked] == ["switch_context"]
+    assert ctx.invoked[0][1]["context"] == "prod"
 
 
 def test_several_new_events_make_one_notice_with_the_first_ones_named(
@@ -325,3 +324,92 @@ def test_a_long_message_is_cut_for_the_system(ctx, make_event) -> None:
     notifications.poll()
 
     assert len(ctx.ui.system[0][1]) == 220
+
+
+def test_a_notice_about_several_things_opens_the_panel(ctx, make_event) -> None:
+    ctx.cluster.events = [
+        make_event("a", last_seen=2000.0),
+        make_event("b", last_seen=2001.0),
+    ]
+    notifications = build(ctx)
+
+    notifications.poll()
+    ctx.ui.system[0][2]()
+
+    assert notifications.panel.opened and ctx.invoked == []
+    notifications.open_panel()  # already open: it is left open
+    assert notifications.panel.opened
+
+
+def test_the_panel_shows_every_context_and_a_click_opens_the_one_of_the_card(
+    ctx, make_event
+) -> None:
+    ctx.cluster.contexts = ["prod", "staging"]
+    ctx.cluster.events = [make_event(last_seen=2000.0)]
+    notifications = build(ctx)
+    notifications.poll()
+    notifications.toggle()
+    cards = cards_of(notifications)
+    assert {card.item.context for card in cards} == {"prod", "staging"}
+    staging = next(card for card in cards if card.item.context == "staging")
+
+    click_on(staging)
+
+    assert ctx.invoked[-1][0] == "switch_context"
+    assert ctx.invoked[-1][1]["context"] == "staging"
+    assert not notifications.panel.opened  # it leaves the panel
+
+
+def test_a_notice_of_the_app_has_no_context_to_open(ctx) -> None:
+    notifications = build(ctx)
+    notifications.notice("error", "Boom", "it broke", "e", True)
+    notifications.toggle()
+    (card,) = cards_of(notifications)
+
+    click_on(card)
+    notifications.open_context(card.item)
+
+    assert ctx.invoked == []
+
+
+def test_a_context_the_app_cannot_open_is_said(ctx, make_event) -> None:
+    ctx.cluster.events = [make_event(last_seen=2000.0)]
+    notifications = build(ctx)
+    notifications.poll()
+    notifications.open_context(notifications.store.items()[0])
+    report = ctx.invoked[0][1]["report"]
+
+    report("There is no context prod.")
+
+    assert ctx.ui.messages[-1][2] == "There is no context prod."
+
+
+def cards_of(notifications):
+    from PySide6.QtCore import QCoreApplication, QEvent
+
+    from kubescope.notifications.panel import Card
+
+    # the cards drawn before go with the next turn of the loop
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    return notifications.panel.list.findChildren(Card)
+
+
+def click_on(card) -> None:
+    from PySide6.QtCore import QEvent, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+    from PySide6.QtWidgets import QApplication
+
+    for button, at in (
+        (Qt.MouseButton.RightButton, (5.0, 5.0)),  # not the left one
+        (Qt.MouseButton.LeftButton, (-50.0, -50.0)),  # released outside the card
+        (Qt.MouseButton.LeftButton, (5.0, 5.0)),
+    ):
+        event = QMouseEvent(
+            QEvent.Type.MouseButtonRelease,
+            QPointF(*at),
+            QPointF(*at),
+            button,
+            button,
+            Qt.KeyboardModifier.NoModifier,
+        )
+        QApplication.sendEvent(card, event)

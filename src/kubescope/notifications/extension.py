@@ -3,6 +3,7 @@ at the events of the cluster from time to time, and the panel."""
 
 import time
 from collections.abc import Callable
+from functools import partial
 
 from kubescope.sdk import (
     CONTEXT_CHANGED,
@@ -57,6 +58,7 @@ class Notifications(QObject):
         self.panel.on_closed = lambda: self.bell.setChecked(False)
         self.panel.on_mark_read = self.mark_read
         self.panel.on_clear = self.clear
+        self.panel.on_open = self.open_context
         self.panel.on_resized = lambda width: setattr(
             self.settings, "panel_width", width
         )
@@ -137,7 +139,22 @@ class Notifications(QObject):
                 f"{one.reason or one.message} · {one.context}".strip(" ·")
                 for one in items[:SHOWN_IN_A_NOTICE]
             )
-        ui.show_system_notification(title, message[:MESSAGE_LIMIT], self.open_panel)
+        click: Callable[[], None] = self.open_panel
+        if len(items) == 1 and items[0].context:  # the one notice goes to its context
+            click = partial(self.open_context, items[0])
+        ui.show_system_notification(title, message[:MESSAGE_LIMIT], click)
+
+    def open_context(self, item: Notification) -> None:
+        """Go to the context a notification belongs to, and leave the panel."""
+        ui = self.ctx.ui
+        if ui is None or not item.context:
+            return
+        self.ctx.invoke(
+            "switch_context",
+            context=item.context,
+            report=lambda text: ui.show_message("warning", TITLE, text),
+        )
+        self.panel.close_panel()
 
     def open_panel(self) -> None:
         """Show the panel, as the bell does; a notice of the system leads here."""

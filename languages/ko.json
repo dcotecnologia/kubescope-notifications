@@ -10,6 +10,7 @@
             "Mark all as read": "모두 읽음으로 표시",
             "Nothing to report. Warnings and errors will show here.": "보고할 내용이 없습니다. 경고와 오류가 여기에 표시됩니다.",
             "Notifications": "알림",
+            "Open the context {context}": "컨텍스트 {context} 열기",
             "Warning": "경고",
             "just now": "방금",
             "{amount}{unit} ago": "{amount}{unit} 전"

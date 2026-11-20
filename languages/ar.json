@@ -10,6 +10,7 @@
             "Mark all as read": "وضع علامة مقروء على الكل",
             "Nothing to report. Warnings and errors will show here.": "لا شيء للإبلاغ عنه. ستظهر التحذيرات والأخطاء هنا.",
             "Notifications": "الإشعارات",
+            "Open the context {context}": "فتح السياق {context}",
             "Warning": "تحذير",
             "just now": "الآن",
             "{amount}{unit} ago": "منذ {amount}{unit}"

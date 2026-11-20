@@ -50,6 +50,7 @@ class FakeUi:
         self.central = QWidget(self.window)
         self.central.resize(900, 600)
         self.buttons: list[tuple[str, QWidget]] = []
+        self.messages: list[tuple] = []
         self.system: list[tuple] = []  # what was told to the operating system
 
     def themed(self, color, text=False):
@@ -59,6 +60,9 @@ class FakeUi:
         button.setParent(self.central)
         button.move(840, 7)
         self.buttons.append((owner, button))
+
+    def show_message(self, icon, title, text):
+        self.messages.append((icon, title, text))
 
     def show_system_notification(self, title, message, on_click=None):
         self.system.append((title, message, on_click))
@@ -125,7 +129,12 @@ class FakeCtx:
         self.current_context: str | None = "prod"
         self.data_directory = data_directory
         self.sections: list[tuple] = []
+        self.invoked: list[tuple] = []
         self.cleanups: list = []
+
+    def invoke(self, command, /, **arguments):
+        self.invoked.append((command, arguments))
+        return True
 
     def add_settings_section(self, title, factory):
         self.sections.append((title, factory))

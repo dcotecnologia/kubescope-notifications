@@ -10,6 +10,7 @@
             "Mark all as read": "すべて既読にする",
             "Nothing to report. Warnings and errors will show here.": "報告するものはありません。警告とエラーはここに表示されます。",
             "Notifications": "通知",
+            "Open the context {context}": "コンテキスト {context} を開く",
             "Warning": "警告",
             "just now": "たった今",
             "{amount}{unit} ago": "{amount}{unit}前"

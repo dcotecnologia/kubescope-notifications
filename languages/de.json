@@ -10,6 +10,7 @@
             "Mark all as read": "Alle als gelesen markieren",
             "Nothing to report. Warnings and errors will show here.": "Nichts zu melden. Warnungen und Fehler erscheinen hier.",
             "Notifications": "Benachrichtigungen",
+            "Open the context {context}": "Kontext {context} öffnen",
             "Warning": "Warnung",
             "just now": "gerade eben",
             "{amount}{unit} ago": "vor {amount}{unit}"

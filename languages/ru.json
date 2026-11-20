@@ -10,6 +10,7 @@
             "Mark all as read": "Отметить все как прочитанные",
             "Nothing to report. Warnings and errors will show here.": "Сообщать нечего. Предупреждения и ошибки появятся здесь.",
             "Notifications": "Уведомления",
+            "Open the context {context}": "Открыть контекст {context}",
             "Warning": "Предупреждение",
             "just now": "только что",
             "{amount}{unit} ago": "{amount}{unit} назад"

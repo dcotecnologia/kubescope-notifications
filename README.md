@@ -34,6 +34,8 @@ and nothing else of the app. Install it in **Settings → Extensions**.
 - **One notification for an event that repeats.** It keeps the count and the time of the last time, instead of
   a new line each time.
 - **What the app itself tells.** The errors KubeScope shows in its banner, the warnings and errors of its message boxes and the notice of a **new version** of the app are listed too, with the same bell (an update is told once per version; an error that repeats counts instead of piling up).
+- **Click to go there.** A card names its context, and clicking it (or the notice of the system, when it is about one
+  thing) switches KubeScope to that context and closes the panel; a notice of the app has no context to go to.
 - **A bell with a count.** The red number is what happened since you last opened the panel.
 - **A panel that slides in.** Click the bell: the list opens from the right, the newest first, with the object,
   the namespace, the message and how long ago. **Mark all as read** and **Clear** are in its header.

@@ -10,6 +10,7 @@
             "Mark all as read": "Tümünü okundu olarak işaretle",
             "Nothing to report. Warnings and errors will show here.": "Bildirilecek bir şey yok. Uyarılar ve hatalar burada görünecek.",
             "Notifications": "Bildirimler",
+            "Open the context {context}": "{context} bağlamını aç",
             "Warning": "Uyarı",
             "just now": "az önce",
             "{amount}{unit} ago": "{amount}{unit} önce"

@@ -10,6 +10,7 @@
             "Mark all as read": "علامت‌گذاری همه به‌عنوان خوانده‌شده",
             "Nothing to report. Warnings and errors will show here.": "چیزی برای گزارش نیست. هشدارها و خطاها اینجا نمایش داده می‌شوند.",
             "Notifications": "اعلان‌ها",
+            "Open the context {context}": "باز کردن زمینهٔ {context}",
             "Warning": "هشدار",
             "just now": "همین الان",
             "{amount}{unit} ago": "{amount}{unit} پیش"

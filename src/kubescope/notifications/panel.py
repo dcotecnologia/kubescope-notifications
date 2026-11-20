@@ -113,9 +113,23 @@ class _Grip(QWidget):
 class Card(QFrame):
     """One notification."""
 
-    def __init__(self, item: Notification, now: float) -> None:
+    def __init__(
+        self,
+        item: Notification,
+        now: float,
+        opened: Callable[[Notification], None] = lambda _item: None,
+    ) -> None:
         super().__init__()
+        self.item = item
+        self._opened = opened
         self.setObjectName("notificationCard")
+        if item.context:  # one of a cluster: a click goes to its context
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.setToolTip(
+                QCoreApplication.translate(
+                    "NotificationPanel", "Open the context {context}"
+                ).format(context=item.context)
+            )
         self.setProperty("level", item.level)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 9, 12, 9)
@@ -139,6 +153,7 @@ class Card(QFrame):
         about = " · ".join(
             part
             for part in (
+                item.context,
                 f"{item.kind}/{item.name}" if item.name else "",
                 item.namespace,
             )
@@ -152,12 +167,22 @@ class Card(QFrame):
         message = QLabel(item.message)
         message.setObjectName("notificationMessage")
         message.setWordWrap(True)
-        message.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         layout.addWidget(message)
         times = f"{item.count}× · " if item.count > 1 else ""
         when = QLabel(times + ago(now - item.last_seen))
         when.setObjectName("notificationMeta")
         layout.addWidget(when)
+        for label in self.findChildren(QLabel):  # the click is the card's
+            label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if (
+            self.item.context
+            and event.button() == Qt.MouseButton.LeftButton
+            and self.rect().contains(event.position().toPoint())
+        ):
+            self._opened(self.item)
+        super().mouseReleaseEvent(event)
 
 
 class NotificationPanel(QFrame):
@@ -183,6 +208,7 @@ class NotificationPanel(QFrame):
         self.on_clear: Callable[[], None] = lambda: None
         self.on_mark_read: Callable[[], None] = lambda: None
         self.on_resized: Callable[[int], None] = lambda width: None
+        self.on_open: Callable[[Notification], None] = lambda item: None
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(14, 14, 14, 14)
@@ -258,7 +284,7 @@ class NotificationPanel(QFrame):
             empty.setWordWrap(True)
             self.rows.addWidget(empty)
         for item in items[:SHOWN]:
-            self.rows.addWidget(Card(item, now))
+            self.rows.addWidget(Card(item, now, lambda one: self.on_open(one)))
         self.rows.addStretch(1)
         self.mark_read.setEnabled(bool(items))
         self.clear_all.setEnabled(bool(items))
