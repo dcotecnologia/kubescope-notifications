@@ -30,6 +30,7 @@ and nothing else of the app. Install it in **Settings → Extensions**.
 - **A bell with a count.** The red number is what happened since you last opened the panel.
 - **A panel that slides in.** Click the bell: the list opens from the right, the newest first, with the object,
   the namespace, the message and how long ago. **Mark all as read** and **Clear** are in its header.
+- **A panel you can resize.** Drag its left edge to make it wider or narrower (300 to 900 px, as far as the window allows); the width is kept.
 - **A cache that survives a restart.** The notifications are kept on disk (at most 500), so they are there when
   you open the app.
 

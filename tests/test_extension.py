@@ -202,3 +202,14 @@ def test_notice_is_for_what_the_app_tells(ctx) -> None:
     notifications.notice("warning", "Careful", "m", "k")  # not repeated by default
 
     assert [item.count for item in notifications.store.items()] == [1]
+
+
+def test_the_width_the_person_dragged_is_kept_and_used_next_time(ctx) -> None:
+    notifications = build(ctx)
+
+    notifications.panel.on_resized(520)
+    assert ctx.settings["panel_width"] == 520
+
+    again = build(ctx)
+    again.panel.open_panel()
+    assert again.panel.width() == 520

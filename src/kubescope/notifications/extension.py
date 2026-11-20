@@ -51,6 +51,10 @@ class Notifications(QObject):
         self.panel.on_closed = lambda: self.bell.setChecked(False)
         self.panel.on_mark_read = self.mark_read
         self.panel.on_clear = self.clear
+        self.panel.on_resized = lambda width: setattr(
+            self.settings, "panel_width", width
+        )
+        self.panel.set_panel_width(self.settings.panel_width)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.poll)
         ui.add_top_bar_button(ctx.id, self.bell)

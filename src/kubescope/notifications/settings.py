@@ -6,6 +6,9 @@ from typing import Any, Protocol
 MINIMUM = 15  # seconds; a list of events every few seconds is too much load
 MAXIMUM = 3600
 DEFAULT = 60
+WIDTH = 400  # the panel, in pixels
+MIN_WIDTH = 300
+MAX_WIDTH = 900
 
 
 class Store(Protocol):
@@ -31,3 +34,15 @@ class NotificationSettings:
     @interval.setter
     def interval(self, value: int) -> None:
         self._store.set("interval", min(max(int(value), MINIMUM), MAXIMUM))
+
+    @property
+    def panel_width(self) -> int:
+        """The width of the panel, as the person dragged it."""
+        value = self._store.get("panel_width", WIDTH)
+        if isinstance(value, bool) or not isinstance(value, int):
+            return WIDTH
+        return min(max(value, MIN_WIDTH), MAX_WIDTH)
+
+    @panel_width.setter
+    def panel_width(self, value: int) -> None:
+        self._store.set("panel_width", min(max(int(value), MIN_WIDTH), MAX_WIDTH))

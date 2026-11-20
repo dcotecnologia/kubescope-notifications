@@ -182,3 +182,27 @@ def test_a_file_from_before_the_notices_of_the_app_still_loads(
     (item,) = NotificationStore(path).items()
 
     assert item.source == "cluster"
+
+
+def test_the_width_of_the_panel_is_kept_between_what_is_usable() -> None:
+    saved: dict = {}
+
+    class Store:
+        def get(self, key, default=None):
+            return saved.get(key, default)
+
+        def set(self, key, value):
+            saved[key] = value
+
+    settings = NotificationSettings(Store())
+    assert settings.panel_width == 400
+    settings.panel_width = 10
+    assert settings.panel_width == 300
+    settings.panel_width = 10**6
+    assert settings.panel_width == 900
+    settings.panel_width = 520
+    assert saved["panel_width"] == 520
+    saved["panel_width"] = "wide"
+    assert settings.panel_width == 400
+    saved["panel_width"] = True
+    assert settings.panel_width == 400

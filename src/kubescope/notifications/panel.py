@@ -9,10 +9,12 @@ from PySide6.QtCore import (
     QEvent,
     QObject,
     QPoint,
+    QPointF,
     QPropertyAnimation,
     Qt,
+    Signal,
 )
-from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtGui import QKeySequence, QMouseEvent, QShortcut
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -25,7 +27,10 @@ from PySide6.QtWidgets import (
 
 from kubescope.notifications.store import ERROR, INFO, Notification
 
-WIDTH = 400
+WIDTH = 400  # the usual width, which can be dragged
+MIN_WIDTH = 300
+MAX_WIDTH = 900
+GRIP = 6  # the strip at the left edge that is dragged
 SHOWN = 200  # the cards drawn; the store keeps more
 SLIDE_MS = 220
 
@@ -76,6 +81,35 @@ QLabel#notificationMeta {{ color: {themed("#6b7380", True)}; font-size: 10px; }}
 """
 
 
+class _Grip(QWidget):
+    """The strip at the left edge of the panel, which is dragged to make it
+    wider or narrower."""
+
+    dragged = Signal(int)  # the width the panel should have
+    released = Signal()
+
+    def __init__(self, panel: QWidget) -> None:
+        super().__init__(panel)
+        self._panel = panel
+        self._origin: QPointF | None = None
+        self._start = 0
+        self.setCursor(Qt.CursorShape.SizeHorCursor)
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        self._origin = event.globalPosition()
+        self._start = self._panel.width()
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if self._origin is not None:
+            moved = event.globalPosition() - self._origin
+            self.dragged.emit(self._start - int(moved.x()))  # leftward is wider
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if self._origin is not None:
+            self._origin = None
+            self.released.emit()
+
+
 class Card(QFrame):
     """One notification."""
 
@@ -91,6 +125,7 @@ class Card(QFrame):
             item.reason or QCoreApplication.translate("NotificationPanel", "Event")
         )
         reason.setObjectName("notificationReason")
+        reason.setWordWrap(True)
         level = {
             ERROR: QCoreApplication.translate("NotificationPanel", "Error"),
             INFO: QCoreApplication.translate("NotificationPanel", "Info"),
@@ -112,6 +147,7 @@ class Card(QFrame):
         if about:
             where = QLabel(about)
             where.setObjectName("notificationMeta")
+            where.setWordWrap(True)
             layout.addWidget(where)
         message = QLabel(item.message)
         message.setObjectName("notificationMessage")
@@ -139,12 +175,14 @@ class NotificationPanel(QFrame):
         self._themed = themed
         self._top = top
         self.setObjectName("notificationPanel")
+        self._width = WIDTH
         self.setFixedWidth(WIDTH)
         self.hide()
         self.opened = False
         self.on_closed: Callable[[], None] = lambda: None
         self.on_clear: Callable[[], None] = lambda: None
         self.on_mark_read: Callable[[], None] = lambda: None
+        self.on_resized: Callable[[int], None] = lambda width: None
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(14, 14, 14, 14)
@@ -195,6 +233,9 @@ class NotificationPanel(QFrame):
         self._escape.setContext(Qt.ShortcutContext.WindowShortcut)
         self._escape.setEnabled(False)
         self._escape.activated.connect(self.close_panel)
+        self.grip = _Grip(self)
+        self.grip.dragged.connect(self.set_panel_width)
+        self.grip.released.connect(lambda: self.on_resized(self._width))
         host.installEventFilter(self)
         self.restyle()
 
@@ -222,10 +263,32 @@ class NotificationPanel(QFrame):
         self.mark_read.setEnabled(bool(items))
         self.clear_all.setEnabled(bool(items))
 
+    def set_panel_width(self, width: int) -> None:
+        """Give the panel a width, within what keeps it usable; while it is
+        open it stays at the right edge."""
+        self._width = min(max(width, MIN_WIDTH), MAX_WIDTH)
+        if self.opened and self.animation.state() != QPropertyAnimation.State.Running:
+            shown, _hidden = self._geometry()
+            self.move(shown)
+        else:
+            self.setFixedWidth(self._fitted())
+        self._place_grip()
+
+    def _fitted(self) -> int:
+        """The width it has now: the one chosen, as far as the window lets."""
+        room = max(self.host.width() - 40, 200)
+        return min(self._width, MAX_WIDTH, room)
+
+    def _place_grip(self) -> None:
+        self.grip.setGeometry(0, 0, GRIP, self.height())
+        self.grip.raise_()
+
     def _geometry(self) -> tuple[QPoint, QPoint]:
         top = self._top()
-        self.setFixedHeight(max(self.host.height() - top, 0))
-        shown = QPoint(self.host.width() - WIDTH, top)
+        width = self._fitted()
+        self.setFixedSize(width, max(self.host.height() - top, 0))
+        self._place_grip()
+        shown = QPoint(self.host.width() - width, top)
         return shown, QPoint(self.host.width(), top)
 
     def open_panel(self) -> None:

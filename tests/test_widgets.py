@@ -3,6 +3,8 @@ from PySide6.QtWidgets import QLabel, QWidget
 
 from kubescope.notifications.bell import Bell, bell_icon
 from kubescope.notifications.panel import (
+    MAX_WIDTH,
+    MIN_WIDTH,
     SHOWN,
     WIDTH,
     NotificationPanel,
@@ -174,3 +176,54 @@ def test_a_notice_of_the_app_shows_its_title_and_how_serious_it_is(tmp_path) -> 
     assert "KubeScope update available" in shown and "Info" in shown
     assert "Boom" in shown and "Error" in shown
     assert "Version 9 is available" in shown
+
+
+def test_it_is_dragged_by_its_left_edge_and_the_width_is_handed_on() -> None:
+    from PySide6.QtCore import QEvent, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+    from PySide6.QtWidgets import QApplication
+
+    host = QWidget()
+    panel = make_panel(host)
+    host.show()
+    kept: list[int] = []
+    panel.on_resized = kept.append
+    panel.open_panel()
+    panel.animation.setCurrentTime(panel.animation.duration())
+    panel.animation.finished.emit()
+
+    def mouse(kind: QEvent.Type, x: float) -> None:
+        event = QMouseEvent(
+            kind,
+            QPointF(2, 20),
+            QPointF(x, 20),
+            Qt.MouseButton.LeftButton,
+            Qt.MouseButton.LeftButton,
+            Qt.KeyboardModifier.NoModifier,
+        )
+        QApplication.sendEvent(panel.grip, event)
+
+    mouse(QEvent.Type.MouseMove, 500.0)  # no press yet: nothing moves
+    assert panel.width() == WIDTH
+    mouse(QEvent.Type.MouseButtonPress, 600.0)
+    mouse(QEvent.Type.MouseMove, 520.0)  # 80 px to the left: 80 px wider
+    assert panel.width() == WIDTH + 80
+    assert panel.pos().x() == 900 - (WIDTH + 80)  # it stays at the right edge
+    mouse(QEvent.Type.MouseButtonRelease, 520.0)
+    assert kept == [WIDTH + 80]
+    mouse(QEvent.Type.MouseButtonRelease, 520.0)  # one release only
+    assert kept == [WIDTH + 80]
+
+
+def test_the_width_stays_within_what_is_usable_and_what_the_window_allows() -> None:
+    host = QWidget()
+    panel = make_panel(host)
+
+    panel.set_panel_width(10)
+    assert panel.width() == MIN_WIDTH
+    panel.set_panel_width(10**6)
+    assert panel.width() == 900 - 40  # the window has room for 40 px of its own
+    host.resize(380, 600)  # a window narrower than the panel
+    panel.open_panel()
+    assert panel.width() == 340
+    assert panel.width() < MAX_WIDTH
