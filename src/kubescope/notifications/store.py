@@ -9,7 +9,7 @@ can name objects of the cluster: the file is readable only by the person.
 
 import json
 import os
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 from kubescope.sdk.models import ClusterEvent
@@ -65,13 +65,27 @@ def level_of(event: ClusterEvent) -> str:
     return ERROR if event.reason in ERROR_REASONS else WARNING
 
 
+def identity_of(
+    context: str, namespace: str, kind: str, name: str, reason: str, fallback: str
+) -> str:
+    """What makes two events the same alert: the object, the reason and the
+    context, so an event that Kubernetes creates again for the same thing is
+    one alert whose count and time move on; `fallback` stands in when the event
+    is not about a named object."""
+    about = f"{namespace}/{kind}/{name}/{reason}" if name else fallback
+    return f"{context}\n{about}"
+
+
 def notification_of(context: str, event: ClusterEvent) -> Notification:
-    # an event without a uid is told by what it is about
-    identity = (
-        event.uid or f"{event.namespace}/{event.kind}/{event.name}/{event.reason}"
-    )
     return Notification(
-        key=f"{context}\n{identity}",
+        key=identity_of(
+            context,
+            event.namespace,
+            event.kind,
+            event.name,
+            event.reason,
+            event.uid or event.message,
+        ),
         context=context,
         level=level_of(event),
         reason=event.reason,
@@ -105,7 +119,21 @@ class NotificationStore:
             self.read_until = float(document.get("read_until", 0.0))
             for raw in document.get("items", []):
                 item = Notification(**raw)
-                self._items[item.key] = item
+                if item.source == CLUSTER and item.name:  # kept by an older rule
+                    item = replace(
+                        item,
+                        key=identity_of(
+                            item.context,
+                            item.namespace,
+                            item.kind,
+                            item.name,
+                            item.reason,
+                            item.key,
+                        ),
+                    )
+                before = self._items.get(item.key)
+                if before is None or item.last_seen >= before.last_seen:
+                    self._items[item.key] = item
         except OSError, ValueError, TypeError, AttributeError:
             self._items = {}
             self.read_until = 0.0
@@ -131,12 +159,13 @@ class NotificationStore:
         key: str,
         repeat: bool,
         moment: float,
+        context: str = "",
     ) -> bool:
         """Add a notice of the app itself: an error, a warning or an update.
 
         The same `key` again is the same notice, which counts once more when
-        `repeat` is set and is left alone otherwise. True when something
-        changed.
+        `repeat` is set and is left alone otherwise; `context` names the one
+        it is about, when there is one. True when something changed.
         """
         identity = f"{APP}\n{key}"
         before = self._items.get(identity)
@@ -144,7 +173,7 @@ class NotificationStore:
             return False
         self._items[identity] = Notification(
             key=identity,
-            context="",
+            context=context,
             level=level if level in LEVELS else WARNING,
             reason=title,
             namespace="",
@@ -157,6 +186,18 @@ class NotificationStore:
             source=APP,
         )
         self._trim()
+        self.save()
+        return True
+
+    def find(self, key: str) -> Notification | None:
+        """The notice of the app added with that key."""
+        return self._items.get(f"{APP}\n{key}")
+
+    def discard(self, key: str) -> bool:
+        """Take a notice of the app away, the one added with that key; True
+        when there was one."""
+        if self._items.pop(f"{APP}\n{key}", None) is None:
+            return False
         self.save()
         return True
 

@@ -58,7 +58,7 @@ def test_the_newest_come_first_and_the_oldest_go_when_there_are_too_many(
     )
     store.merge("prod", [make_event("c", last_seen=2.0)])
 
-    assert [item.key.split("\n")[1] for item in store.items()] == ["b", "c"]
+    assert [item.name for item in store.items()] == ["api-b", "api-c"]
 
 
 def test_what_was_read_is_not_unread_again(tmp_path, make_event) -> None:
@@ -219,3 +219,83 @@ def test_the_changes_are_the_notifications_that_are_new_or_happened_again(
 
     assert [len(first), len(again), len(later)] == [1, 0, 1]
     assert later[0].last_seen == 9.0
+
+
+def test_a_notice_of_the_app_may_name_its_context_and_be_taken_away(tmp_path) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+
+    store.add_notice("warning", "Could not read dev", "no", "k", False, 1.0, "dev")
+    (item,) = store.items()
+    assert item.context == "dev" and item.source == "app"
+
+    assert store.discard("k") is True
+    assert store.discard("k") is False  # nothing left
+    assert NotificationStore(tmp_path / "n.json").items() == []
+
+
+def test_an_event_made_again_for_the_same_thing_is_the_same_alert(
+    tmp_path, make_event
+) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+
+    store.merge_changes("prod", [make_event("first", name="api", last_seen=10.0)])
+    again = store.merge_changes(
+        "prod", [make_event("second", name="api", last_seen=50.0, count=7)]
+    )
+    other_pod = store.merge_changes(
+        "prod", [make_event("third", name="web", last_seen=60.0)]
+    )
+    other_context = store.merge_changes(
+        "dev", [make_event("fourth", name="api", last_seen=70.0)]
+    )
+
+    assert len(again) == 1 and len(other_pod) == 1 and len(other_context) == 1
+    assert len(store.items()) == 3  # api in prod, web in prod, api in dev
+    api = next(
+        item for item in store.items() if item.name == "api" and item.context == "prod"
+    )
+    assert (api.count, api.last_seen) == (7, 50.0)
+
+
+def test_another_reason_for_the_same_object_is_another_alert(
+    tmp_path, make_event
+) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+
+    store.merge_changes("prod", [make_event("a", name="api", reason="BackOff")])
+    store.merge_changes("prod", [make_event("b", name="api", reason="Failed")])
+
+    assert len(store.items()) == 2
+
+
+def test_an_event_about_no_named_object_is_told_by_its_uid(
+    tmp_path, make_event
+) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+
+    store.merge_changes("prod", [make_event("a", name="", kind="")])
+    store.merge_changes("prod", [make_event("a", name="", kind="", last_seen=5000.0)])
+    store.merge_changes("prod", [make_event("b", name="", kind="")])
+
+    assert len(store.items()) == 2
+
+
+def test_what_an_older_version_kept_by_uid_is_merged_when_it_loads(
+    tmp_path, make_event
+) -> None:
+    path = tmp_path / "n.json"
+    store = NotificationStore(path)
+    store.merge_changes("prod", [make_event("a", name="api", last_seen=10.0)])
+    store.merge_changes("prod", [make_event("b", name="web", last_seen=20.0)])
+    document = json.loads(path.read_text(encoding="utf-8"))
+    old = dict(document["items"][0])
+    old["key"] = "prod\nuid-of-the-first"  # how the old rule named it
+    old["last_seen"] = 99.0
+    twin = dict(old, key="prod\nuid-of-the-second", last_seen=5.0)
+    document["items"] = [old, twin, document["items"][1]]
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    items = NotificationStore(path).items()
+
+    assert [item.name for item in items] == ["api", "web"] or len(items) == 2
+    assert next(item for item in items if item.name == "api").last_seen == 99.0

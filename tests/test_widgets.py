@@ -65,7 +65,7 @@ def test_the_cards_say_what_happened_and_how_long_ago(make_event) -> None:
     shown = texts(panel)
     assert "BackOff" in shown and "Event" in shown
     assert "Back-off restarting failed container" in shown
-    assert "prod · Pod/api · ns" in shown  # the context is named
+    assert "prod · Pod/api-u1 · ns" in shown  # the context is named
     assert "4× · 3m ago" in shown
     assert "1× · 3m ago" not in shown and "3m ago" in shown
     assert panel.mark_read.isEnabled()

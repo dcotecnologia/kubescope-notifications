@@ -24,18 +24,22 @@ and nothing else of the app. Install it in **Settings → Extensions**.
   left alone for a growing number of rounds (up to 30), so a few dead contexts do not run a sign-in command at every
   look.
 - **Tells the operating system.** A new notification also shows a notice of the system, which brings KubeScope
-  forward and opens the panel when you click it. Several new ones make one notice. It is not shown while KubeScope is
-  the window in front, for what happened before the app started, or for the notice of a new version, which the app
-  tells by itself; you can turn it off in **Settings → Notifications**. It needs a system tray; without the
+  forward and opens the panel when you click it. Several new ones make one notice. It is not shown for what happened
+  before the app started, or for the notice of a new version, which the app tells by itself; you can turn it off in **Settings → Notifications**. It needs a system tray; without the
   background mode the extension makes one only to carry the notice.
 - **Warnings and errors.** Kubernetes has no level above Warning, so an event whose reason says that
   something failed (`BackOff`, `FailedScheduling`, `ImagePullBackOff`, `OOMKilling`, ...) is shown as an error
   and the others as warnings.
-- **One notification for an event that repeats.** It keeps the count and the time of the last time, instead of
-  a new line each time.
+- **One notification for an alert that repeats.** An alert is a thing, a reason and a context: when Kubernetes makes the
+  event again for the same pod and reason, or an error of the app comes back, it keeps the count and the time of the last
+  time instead of a new line; and the operating system is told about the same alert once, not again for 30 minutes.
 - **What the app itself tells.** The errors KubeScope shows in its banner, the warnings and errors of its message boxes and the notice of a **new version** of the app are listed too, with the same bell (an update is told once per version; an error that repeats counts instead of piling up).
+- **Contexts that cannot be read are listed.** A context that is not signed in (an expired SSO token, for example) gets
+  one notification saying why, which goes away when it can be read again; clicking it opens that context, where the
+  app's **Sign in** button is.
 - **Click to go there.** A card names its context, and clicking it (or the notice of the system, when it is about one
-  thing) switches KubeScope to that context and closes the panel; a notice of the app has no context to go to.
+  thing) switches KubeScope to that context and closes the panel; an error or a warning of the app goes back to the context that was in use when it happened, and only the notice of a new
+  version has none.
 - **A bell with a count.** The red number is what happened since you last opened the panel.
 - **A panel that slides in.** Click the bell: the list opens from the right, the newest first, with the object,
   the namespace, the message and how long ago. **Mark all as read** and **Clear** are in its header.

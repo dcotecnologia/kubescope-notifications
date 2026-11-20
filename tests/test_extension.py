@@ -56,7 +56,7 @@ def test_a_context_that_fails_is_left_alone_for_a_while_and_the_others_go_on(
 
     asked = [name for name, _types in ctx.cluster.asked]
     assert asked.count("prod") == 3 and asked.count("dead") == 2
-    assert len(notifications.store.items()) == 1 and not notifications._busy
+    assert len(notifications.store.items()) == 2 and not notifications._busy
     ctx.cluster.failures.clear()
     for _ in range(3):
         notifications.poll()
@@ -290,20 +290,26 @@ def test_what_happened_before_the_start_or_is_not_new_is_not_told(
     assert ctx.ui.system == [] and notifications.bell.unread == 1
 
 
-def test_the_system_is_not_told_when_it_is_turned_off_or_the_window_is_in_front(
+def test_the_system_is_not_told_when_it_is_turned_off(ctx, make_event) -> None:
+    ctx.cluster.events = [make_event("a", last_seen=2000.0)]
+    notifications = build(ctx)
+    ctx.settings["system_notifications"] = False
+
+    notifications.poll()
+
+    assert ctx.ui.system == []
+
+
+def test_the_system_is_told_even_with_the_window_in_front(
     ctx, make_event, monkeypatch
 ) -> None:
     ctx.cluster.events = [make_event("a", last_seen=2000.0)]
     notifications = build(ctx)
-    ctx.settings["system_notifications"] = False
-    notifications.poll()
-    assert ctx.ui.system == []
-
-    ctx.settings["system_notifications"] = True
-    ctx.cluster.events = [make_event("b", last_seen=2001.0)]
     monkeypatch.setattr(ctx.ui.window, "isActiveWindow", lambda: True)
+
     notifications.poll()
-    assert ctx.ui.system == []
+
+    assert len(ctx.ui.system) == 1
 
 
 def test_an_error_of_the_app_is_told_to_the_system_but_an_update_is_not(ctx) -> None:
@@ -413,3 +419,97 @@ def click_on(card) -> None:
             Qt.KeyboardModifier.NoModifier,
         )
         QApplication.sendEvent(card, event)
+
+
+def test_a_context_that_cannot_be_read_is_listed_with_why_and_goes_when_it_can(
+    ctx, make_event
+) -> None:
+    ctx.cluster.contexts = ["prod", "dead"]
+    ctx.cluster.events = []
+    ctx.cluster.failures["dead"] = RuntimeError("exec: failed\ntoken has expired")
+    notifications = build(ctx)
+
+    notifications.poll()
+    notifications.poll()  # the same notice is not piled up
+    (one,) = notifications.store.items()
+
+    assert one.context == "dead" and one.level == "warning"
+    assert one.reason == "Could not read dead"
+    assert one.message == "exec: failed"  # the first line of what it said
+    ((title, message, click),) = ctx.ui.system  # told once, when it first fails
+    assert title == "Could not read dead" and message == "dead: exec: failed"
+    click()
+    assert ctx.invoked[-1][1]["context"] == "dead"
+    assert notifications.bell.unread == 1
+
+    ctx.cluster.failures.clear()
+    for _ in range(3):  # after its pause
+        notifications.poll()
+    assert notifications.store.items() == []
+
+
+def test_the_reason_a_context_failed_is_cut_and_may_be_empty() -> None:
+    from kubescope.notifications.extension import first_line
+
+    assert first_line("\n\n  a  \nb") == "a"
+    assert first_line("   ") == ""
+    assert len(first_line("x" * 1000)) == 300
+
+
+def test_an_error_of_the_app_goes_back_to_the_context_it_happened_in(ctx) -> None:
+    activate(ctx)  # type: ignore[arg-type]
+
+    ctx.events.fire(
+        "notification",
+        level="error",
+        title="Auth failed",
+        message="token expired",
+        key="e",
+        repeat=True,
+        context="prod",
+    )
+
+    ((_title, message, click),) = ctx.ui.system
+    assert message == "prod: token expired"
+    click()
+    assert ctx.invoked[-1][1]["context"] == "prod"
+
+
+def test_the_same_alert_is_told_to_the_system_once_until_the_cooldown(ctx) -> None:
+    clock = [2000.0]
+    settings = NotificationSettings(ctx.settings)
+    store = NotificationStore(ctx.data_directory / "n.json")
+    notifications = Notifications(ctx, settings, store, now=lambda: clock[0])  # type: ignore[arg-type]
+
+    for _ in range(5):  # the same error, again and again
+        clock[0] += 10
+        notifications.notice("error", "Boom", "it broke", "e", True, "prod")
+    assert len(ctx.ui.system) == 1  # told once
+
+    clock[0] += 1800  # long after
+    notifications.notice("error", "Boom", "it broke", "e", True, "prod")
+    assert len(ctx.ui.system) == 2
+
+    notifications.notice("error", "Other", "another", "o", True, "prod")
+    assert len(ctx.ui.system) == 3  # another alert is not held back
+    assert [
+        item.count for item in notifications.store.items() if item.reason == "Boom"
+    ] == [6]
+
+
+def test_an_event_that_comes_back_is_not_told_again_within_the_cooldown(
+    ctx, make_event
+) -> None:
+    clock = [2000.0]
+    settings = NotificationSettings(ctx.settings)
+    store = NotificationStore(ctx.data_directory / "n.json")
+    notifications = Notifications(ctx, settings, store, now=lambda: clock[0])  # type: ignore[arg-type]
+    ctx.cluster.events = [make_event("a", name="api", last_seen=2000.0)]
+    notifications.poll()
+
+    clock[0] = 2100.0  # Kubernetes made the event again for the same thing
+    ctx.cluster.events = [make_event("z", name="api", last_seen=2100.0, count=2)]
+    notifications.poll()
+
+    assert len(ctx.ui.system) == 1
+    assert len(notifications.store.items()) == 1

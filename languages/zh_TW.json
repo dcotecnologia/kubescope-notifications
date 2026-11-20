@@ -25,11 +25,12 @@
             "5 minutes": "5 分鐘",
             "How often the events of the cluster are read.": "讀取叢集事件的頻率。",
             "Look for new events every": "尋找新事件的間隔",
-            "Shows a notice of the system, which opens the app when clicked, unless KubeScope is the window in front.": "顯示系統通知，點擊後開啟應用程式；當 KubeScope 是最前面的視窗時不顯示。",
+            "Shows a notice of the system, which opens the app when clicked.": "顯示系統通知，點擊後開啟應用程式。",
             "Tell the operating system when something new happens": "有新狀況時通知作業系統",
             "{seconds} seconds": "{seconds} 秒"
         },
         "NotificationsExtension": {
+            "Could not read {context}": "無法讀取 {context}",
             "Notification": "通知",
             "Notifications": "通知",
             "{count} new notifications": "{count} 則新通知"

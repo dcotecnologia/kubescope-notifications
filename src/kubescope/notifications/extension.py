@@ -26,6 +26,14 @@ GAP = 6  # between the top bar and the panel
 SINCE = 60.0  # seconds before the start from which an event is still news
 SHOWN_IN_A_NOTICE = 3  # notifications named in one notice of the system
 MESSAGE_LIMIT = 220  # characters of a message in a notice of the system
+COOLDOWN = 1800.0  # seconds before the system is told again about the same alert
+REASON_LIMIT = 300  # characters of why a context could not be read
+
+
+def first_line(reason: str) -> str:
+    """The first line of what a failure said, cut to what a card can hold."""
+    lines = [line.strip() for line in reason.splitlines() if line.strip()]
+    return (lines[0] if lines else reason.strip())[:REASON_LIMIT]
 
 
 class Notifications(QObject):
@@ -50,6 +58,7 @@ class Notifications(QObject):
         self._busy = False
         self._since = now() - SINCE  # what happened before is not news
         self.backoff = Backoff()
+        self._announced: dict[str, float] = {}  # when the system was told of each
         self.bell = Bell(
             QCoreApplication.translate("NotificationsExtension", "Notifications")
         )
@@ -106,22 +115,45 @@ class Notifications(QObject):
         self.backoff.forget(contexts)
         news: list[Notification] = []
         for context, events in found.items():
+            key = f"unreadable:{context}"
             if isinstance(events, str):
                 self.backoff.failed(context)
+                added = self.store.add_notice(
+                    "warning",
+                    QCoreApplication.translate(
+                        "NotificationsExtension", "Could not read {context}"
+                    ).format(context=context),
+                    first_line(events),
+                    key,
+                    False,
+                    self._now(),
+                    context,
+                )
+                if added and (item := self.store.find(key)) is not None:
+                    news.append(item)  # told once, when it first cannot be read
                 continue
             self.backoff.worked(context)
+            self.store.discard(key)  # it can be read again
             news += self.store.merge_changes(context, events)
         self.refresh()
         self.announce([item for item in news if item.last_seen >= self._since])
 
     def announce(self, items: list[Notification]) -> None:
         """Tell the operating system about what is new, in one notice, unless
-        the person is looking at the app or turned it off."""
+        the person turned it off."""
         ui = self.ctx.ui
         if not items or ui is None or not self.settings.system_notifications:
             return
-        if ui.window.isActiveWindow():
-            return  # the bell is in front of them already
+        now = self._now()
+        items = [
+            one
+            for one in items
+            if now - self._announced.get(one.key, -COOLDOWN) >= COOLDOWN
+        ]
+        if not items:
+            return  # the same alerts, told a moment ago
+        for one in items:
+            self._announced[one.key] = now
         items = sorted(items, key=lambda one: one.last_seen, reverse=True)
         if len(items) == 1:
             one = items[0]
@@ -176,13 +208,21 @@ class Notifications(QObject):
         self.store.mark_read(self._now())
 
     def notice(
-        self, level: str, title: str, message: str, key: str, repeat: bool = False
+        self,
+        level: str,
+        title: str,
+        message: str,
+        key: str,
+        repeat: bool = False,
+        context: str = "",
     ) -> None:
-        """The app tells about an error, a warning or an update."""
-        if self.store.add_notice(level, title, message, key, repeat, self._now()):
+        """The app tells about an error, a warning or an update, and the
+        context it is about when it is about one."""
+        now = self._now()
+        if self.store.add_notice(level, title, message, key, repeat, now, context):
             self.refresh()
-            if level != INFO:  # an update is told by the app already
-                item = self.store.items()[0]
+            item = self.store.find(key)
+            if level != INFO and item is not None:  # the app tells of an update
                 self.announce([item])
 
     def mark_read(self) -> None:

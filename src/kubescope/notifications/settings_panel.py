@@ -28,10 +28,7 @@ class NotificationSettingsPanel(QWidget):
             self.tr("Tell the operating system when something new happens")
         )
         self.system.setToolTip(
-            self.tr(
-                "Shows a notice of the system, which opens the app when clicked, "
-                "unless KubeScope is the window in front."
-            )
+            self.tr("Shows a notice of the system, which opens the app when clicked.")
         )
         form.addRow(self.system)
         self._fill(DEFAULT)

@@ -25,11 +25,12 @@
             "5 minutes": "5 Minuten",
             "How often the events of the cluster are read.": "Wie oft die Ereignisse des Clusters gelesen werden.",
             "Look for new events every": "Neue Ereignisse suchen alle",
-            "Shows a notice of the system, which opens the app when clicked, unless KubeScope is the window in front.": "Zeigt eine Systembenachrichtigung, die beim Klicken die App öffnet, außer KubeScope ist das vordere Fenster.",
+            "Shows a notice of the system, which opens the app when clicked.": "Zeigt eine Systembenachrichtigung, die beim Klicken die App öffnet.",
             "Tell the operating system when something new happens": "Das Betriebssystem benachrichtigen, wenn etwas Neues passiert",
             "{seconds} seconds": "{seconds} Sekunden"
         },
         "NotificationsExtension": {
+            "Could not read {context}": "{context} konnte nicht gelesen werden",
             "Notification": "Benachrichtigung",
             "Notifications": "Benachrichtigungen",
             "{count} new notifications": "{count} neue Benachrichtigungen"

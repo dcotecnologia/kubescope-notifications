@@ -25,11 +25,12 @@
             "5 minutes": "5 דקות",
             "How often the events of the cluster are read.": "באיזו תדירות נקראים אירועי האשכול.",
             "Look for new events every": "חפש אירועים חדשים כל",
-            "Shows a notice of the system, which opens the app when clicked, unless KubeScope is the window in front.": "מציג התראה של המערכת שפותחת את היישום בלחיצה, אלא אם KubeScope הוא החלון הקדמי.",
+            "Shows a notice of the system, which opens the app when clicked.": "מציג התראה של המערכת שפותחת את היישום בלחיצה.",
             "Tell the operating system when something new happens": "להודיע למערכת ההפעלה כשקורה משהו חדש",
             "{seconds} seconds": "{seconds} שניות"
         },
         "NotificationsExtension": {
+            "Could not read {context}": "לא ניתן לקרוא את {context}",
             "Notification": "התראה",
             "Notifications": "התראות",
             "{count} new notifications": "{count} התראות חדשות"

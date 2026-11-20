@@ -25,11 +25,12 @@
             "5 minutes": "5분",
             "How often the events of the cluster are read.": "클러스터의 이벤트를 읽는 주기입니다.",
             "Look for new events every": "새 이벤트 확인 주기",
-            "Shows a notice of the system, which opens the app when clicked, unless KubeScope is the window in front.": "클릭하면 앱을 여는 시스템 알림을 표시합니다. KubeScope가 맨 앞 창이면 표시하지 않습니다.",
+            "Shows a notice of the system, which opens the app when clicked.": "클릭하면 앱을 여는 시스템 알림을 표시합니다.",
             "Tell the operating system when something new happens": "새로운 일이 생기면 운영 체제에 알리기",
             "{seconds} seconds": "{seconds}초"
         },
         "NotificationsExtension": {
+            "Could not read {context}": "{context}을(를) 읽을 수 없습니다",
             "Notification": "알림",
             "Notifications": "알림",
             "{count} new notifications": "새 알림 {count}개"

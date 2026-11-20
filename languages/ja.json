@@ -25,11 +25,12 @@
             "5 minutes": "5 分",
             "How often the events of the cluster are read.": "クラスターのイベントを読み取る間隔です。",
             "Look for new events every": "新しいイベントを確認する間隔",
-            "Shows a notice of the system, which opens the app when clicked, unless KubeScope is the window in front.": "クリックするとアプリを開くシステム通知を表示します。KubeScope が最前面にあるときは表示しません。",
+            "Shows a notice of the system, which opens the app when clicked.": "クリックするとアプリを開くシステム通知を表示します。",
             "Tell the operating system when something new happens": "新しいことが起きたらオペレーティングシステムに知らせる",
             "{seconds} seconds": "{seconds} 秒"
         },
         "NotificationsExtension": {
+            "Could not read {context}": "{context} を読み取れませんでした",
             "Notification": "通知",
             "Notifications": "通知",
             "{count} new notifications": "新しい通知 {count} 件"

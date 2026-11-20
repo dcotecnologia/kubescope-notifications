@@ -25,11 +25,12 @@
             "5 minutes": "۵ دقیقه",
             "How often the events of the cluster are read.": "هر چند وقت رویدادهای خوشه خوانده می‌شوند.",
             "Look for new events every": "جستجوی رویدادهای جدید هر",
-            "Shows a notice of the system, which opens the app when clicked, unless KubeScope is the window in front.": "یک اعلان سیستمی نشان می‌دهد که با کلیک برنامه را باز می‌کند، مگر اینکه KubeScope پنجرهٔ جلو باشد.",
+            "Shows a notice of the system, which opens the app when clicked.": "یک اعلان سیستمی نشان می‌دهد که با کلیک برنامه را باز می‌کند.",
             "Tell the operating system when something new happens": "وقتی اتفاق تازه‌ای می‌افتد به سیستم‌عامل خبر بده",
             "{seconds} seconds": "{seconds} ثانیه"
         },
         "NotificationsExtension": {
+            "Could not read {context}": "خواندن {context} ممکن نشد",
             "Notification": "اعلان",
             "Notifications": "اعلان‌ها",
             "{count} new notifications": "{count} اعلان جدید"

@@ -162,7 +162,7 @@ def _make_event(uid="u1", reason="BackOff", last_seen=1000.0, **fields):
         "reason": reason,
         "namespace": "ns",
         "kind": "Pod",
-        "name": "api",
+        "name": f"api-{uid}",
         "message": "Back-off restarting failed container",
         "count": 1,
         "first_seen": last_seen,
