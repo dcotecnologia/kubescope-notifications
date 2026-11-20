@@ -63,7 +63,8 @@ class Notifications(QObject):
         self.backoff = Backoff()
         self._announced: dict[str, float] = {}  # when the system was told of each
         self.bell = Bell(
-            QCoreApplication.translate("NotificationsExtension", "Notifications")
+            QCoreApplication.translate("NotificationsExtension", "Notifications"),
+            ui.themed,
         )
         self.bell.clicked.connect(self.toggle)
         self.panel = NotificationPanel(ui.central, ui.themed, self._panel_top)
@@ -266,6 +267,9 @@ class Notifications(QObject):
         self.refresh()
 
     def restyle(self) -> None:
+        ui = self.ctx.ui
+        if ui is not None:
+            self.bell.restyle(ui.themed)
         self.panel.restyle()
         self.refresh()
 

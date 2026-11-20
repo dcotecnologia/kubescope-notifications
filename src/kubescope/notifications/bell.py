@@ -1,5 +1,7 @@
 """The bell of the top bar, with the number of notifications not read."""
 
+from collections.abc import Callable
+
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import QPushButton, QWidget
@@ -42,7 +44,12 @@ class Bell(QPushButton):
     """A flat 32 px button like the one of the Settings, which shows a red
     badge when something was not read."""
 
-    def __init__(self, tooltip: str, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        tooltip: str,
+        themed: Callable[[str, bool], str] = lambda color, text: color,
+        parent: QWidget | None = None,
+    ) -> None:
         super().__init__(parent)
         self.unread = 0
         self.setObjectName("notificationsBell")
@@ -53,11 +60,19 @@ class Bell(QPushButton):
         self.setCheckable(True)
         self.setFlat(True)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.restyle(themed)
+
+    def restyle(self, themed: Callable[[str, bool], str]) -> None:
+        """Dress it as the Settings button beside it is, in the colors of the
+        theme in use: the top bar has colors of its own in each theme, and the
+        light ones written here would show through in the others."""
+        hover = themed("#0d315d", False)
+        selected = themed("#1f4f87", False)
         self.setStyleSheet(
             "QPushButton#notificationsBell { background: transparent;"
             " border: 1px solid transparent; border-radius: 4px; padding: 0; }"
-            "QPushButton#notificationsBell:hover { background: #0d315d; }"
-            "QPushButton#notificationsBell:checked { background: #1f4f87; }"
+            f"QPushButton#notificationsBell:hover {{ background: {hover}; }}"
+            f"QPushButton#notificationsBell:checked {{ background: {selected}; }}"
         )
 
     def set_unread(self, count: int) -> None:

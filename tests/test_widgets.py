@@ -319,3 +319,15 @@ def test_the_place_in_the_list_is_kept_when_it_is_drawn_again(make_event) -> Non
     assert panel._place == 10**6  # kept until the moment is over
     panel._forget_place()
     assert panel._place is None
+
+
+def test_the_bell_takes_the_colors_of_the_theme_like_the_settings_button() -> None:
+    dark = {"#0d315d": "#222831", "#1f4f87": "#2f3640"}
+    bell = Bell("Notifications", lambda color, text: dark.get(color, color))
+
+    sheet = bell.styleSheet()
+
+    assert "#222831" in sheet and "#2f3640" in sheet  # the ones of the theme
+    assert "#0d315d" not in sheet and "#1f4f87" not in sheet  # not the light ones
+    bell.restyle(lambda color, text: "#abcdef")  # the theme changed
+    assert bell.styleSheet().count("#abcdef") == 2
