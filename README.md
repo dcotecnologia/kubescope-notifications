@@ -18,9 +18,16 @@ and nothing else of the app. Install it in **Settings → Extensions**.
 
 ## What it does
 
-- **Looks at the cluster for you.** While the selected context is signed in, it reads the events of every
-  namespace every 60 seconds (set in **Settings → Notifications**, from 15 seconds to an hour) and keeps the
-  Warning ones. A read that fails, because the context is not signed in, leaves what is kept as it is.
+- **Looks at every cluster for you.** Every context of your kubeconfig is read in the background, four at a time,
+  every 60 seconds (set in **Settings → Notifications**, from 15 seconds to an hour), and the Warning events are
+  kept. A context that cannot be read, because it is not signed in or the cluster is away, keeps what it had and is
+  left alone for a growing number of rounds (up to 30), so a few dead contexts do not run a sign-in command at every
+  look.
+- **Tells the operating system.** A new notification also shows a notice of the system, which brings KubeScope
+  forward and opens the panel when you click it. Several new ones make one notice. It is not shown while KubeScope is
+  the window in front, for what happened before the app started, or for the notice of a new version, which the app
+  tells by itself; you can turn it off in **Settings → Notifications**. It needs a system tray; without the
+  background mode the extension makes one only to carry the notice.
 - **Warnings and errors.** Kubernetes has no level above Warning, so an event whose reason says that
   something failed (`BackOff`, `FailedScheduling`, `ImagePullBackOff`, `OOMKilling`, ...) is shown as an error
   and the others as warnings.

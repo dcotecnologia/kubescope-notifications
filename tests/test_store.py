@@ -206,3 +206,16 @@ def test_the_width_of_the_panel_is_kept_between_what_is_usable() -> None:
     assert settings.panel_width == 400
     saved["panel_width"] = True
     assert settings.panel_width == 400
+
+
+def test_the_changes_are_the_notifications_that_are_new_or_happened_again(
+    tmp_path, make_event
+) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+
+    first = store.merge_changes("prod", [make_event("a", last_seen=5.0)])
+    again = store.merge_changes("prod", [make_event("a", last_seen=5.0)])
+    later = store.merge_changes("prod", [make_event("a", last_seen=9.0)])
+
+    assert [len(first), len(again), len(later)] == [1, 0, 1]
+    assert later[0].last_seen == 9.0

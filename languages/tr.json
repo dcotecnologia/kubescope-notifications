@@ -24,10 +24,14 @@
             "5 minutes": "5 dakika",
             "How often the events of the cluster are read.": "Kümenin olaylarının ne sıklıkla okunacağı.",
             "Look for new events every": "Yeni olayları şu aralıkla ara:",
+            "Shows a notice of the system, which opens the app when clicked, unless KubeScope is the window in front.": "Tıklandığında uygulamayı açan bir sistem bildirimi gösterir; KubeScope öndeki pencere değilse.",
+            "Tell the operating system when something new happens": "Yeni bir şey olduğunda işletim sistemine bildir",
             "{seconds} seconds": "{seconds} saniye"
         },
         "NotificationsExtension": {
-            "Notifications": "Bildirimler"
+            "Notification": "Bildirim",
+            "Notifications": "Bildirimler",
+            "{count} new notifications": "{count} yeni bildirim"
         }
     }
 }

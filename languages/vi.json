@@ -24,10 +24,14 @@
             "5 minutes": "5 phút",
             "How often the events of the cluster are read.": "Tần suất đọc các sự kiện của cụm.",
             "Look for new events every": "Tìm sự kiện mới mỗi",
+            "Shows a notice of the system, which opens the app when clicked, unless KubeScope is the window in front.": "Hiện thông báo của hệ thống, nhấp vào sẽ mở ứng dụng, trừ khi KubeScope đang ở phía trước.",
+            "Tell the operating system when something new happens": "Báo cho hệ điều hành khi có điều gì mới",
             "{seconds} seconds": "{seconds} giây"
         },
         "NotificationsExtension": {
-            "Notifications": "Thông báo"
+            "Notification": "Thông báo",
+            "Notifications": "Thông báo",
+            "{count} new notifications": "{count} thông báo mới"
         }
     }
 }

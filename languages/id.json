@@ -24,10 +24,14 @@
             "5 minutes": "5 menit",
             "How often the events of the cluster are read.": "Seberapa sering peristiwa klaster dibaca.",
             "Look for new events every": "Cari peristiwa baru setiap",
+            "Shows a notice of the system, which opens the app when clicked, unless KubeScope is the window in front.": "Menampilkan pemberitahuan sistem yang membuka aplikasi saat diklik, kecuali KubeScope adalah jendela di depan.",
+            "Tell the operating system when something new happens": "Beri tahu sistem operasi saat ada hal baru",
             "{seconds} seconds": "{seconds} detik"
         },
         "NotificationsExtension": {
-            "Notifications": "Notifikasi"
+            "Notification": "Notifikasi",
+            "Notifications": "Notifikasi",
+            "{count} new notifications": "{count} notifikasi baru"
         }
     }
 }

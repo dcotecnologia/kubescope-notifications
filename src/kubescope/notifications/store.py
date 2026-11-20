@@ -168,20 +168,27 @@ class NotificationStore:
             ]
             self._items = {one.key: one for one in newest}
 
-    def merge(self, context: str, events: list[ClusterEvent]) -> int:
-        """Add what the events of `context` bring; the number of notifications
-        that are new or that happened again since the person looked."""
-        fresh = 0
+    def merge_changes(
+        self, context: str, events: list[ClusterEvent]
+    ) -> list[Notification]:
+        """Add what the events of `context` bring; the notifications that are
+        new or that happened again, whether or not the person looked."""
+        changed: list[Notification] = []
         for event in events:
             item = notification_of(context, event)
             before = self._items.get(item.key)
             if before is None or item.last_seen > before.last_seen:
-                if item.last_seen > self.read_until:
-                    fresh += 1
+                changed.append(item)
                 self._items[item.key] = item
         self._trim()
         self.save()
-        return fresh
+        return changed
+
+    def merge(self, context: str, events: list[ClusterEvent]) -> int:
+        """Add what the events of `context` bring; the number of notifications
+        that are new or that happened again since the person looked."""
+        changed = self.merge_changes(context, events)
+        return sum(1 for item in changed if item.last_seen > self.read_until)
 
     def items(self) -> list[Notification]:
         """Every notification, the newest first."""

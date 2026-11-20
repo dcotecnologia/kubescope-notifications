@@ -11,22 +11,26 @@ from kubescope.sdk import (
     THEME_CHANGED,
     Context,
 )
-from kubescope.sdk.models import ClusterEvent
 from PySide6.QtCore import QCoreApplication, QObject, QPoint, QTimer
 
 from kubescope.notifications.bell import Bell
 from kubescope.notifications.panel import NotificationPanel
+from kubescope.notifications.reader import Backoff, read_all
 from kubescope.notifications.settings import NotificationSettings
 from kubescope.notifications.settings_panel import NotificationSettingsPanel
-from kubescope.notifications.store import NotificationStore
+from kubescope.notifications.store import INFO, Notification, NotificationStore
 
 TITLE = "Notifications"
 GAP = 6  # between the top bar and the panel
+SINCE = 60.0  # seconds before the start from which an event is still news
+SHOWN_IN_A_NOTICE = 3  # notifications named in one notice of the system
+MESSAGE_LIMIT = 220  # characters of a message in a notice of the system
 
 
 class Notifications(QObject):
-    """Looks at the events of the context in use every few seconds, keeps the
-    Warning ones and shows them."""
+    """Looks at the events of every context of the kubeconfig every few
+    seconds, keeps the Warning ones, shows them, and tells the operating
+    system about the new ones."""
 
     def __init__(
         self,
@@ -43,6 +47,8 @@ class Notifications(QObject):
         self.store = store
         self._now = now
         self._busy = False
+        self._since = now() - SINCE  # what happened before is not news
+        self.backoff = Backoff()
         self.bell = Bell(
             QCoreApplication.translate("NotificationsExtension", "Notifications")
         )
@@ -71,20 +77,20 @@ class Notifications(QObject):
         self.timer.start(self.settings.interval * 1000)
 
     def poll(self) -> None:
-        """Read the events of the context in use, off the UI thread. Nothing
-        happens without a context or while the last read is not over; a read
-        that fails (the context is not signed in) leaves what is kept as it
-        is."""
+        """Read the events of every context, off the UI thread. Nothing
+        happens while the last read is not over; a context that cannot be read
+        (it is not signed in) keeps what is kept and is left alone for a
+        while."""
         ui = self.ctx.ui
-        context = self.ctx.current_context
-        if ui is None or not context or self._busy:
+        if ui is None or self._busy:
             return
         self._busy = True
+        skip = self.backoff.round()
         ui.run_action(
-            self.ctx.cluster.get_events,
-            lambda events: self._arrived(context, events),
-            context,
-            ("Warning",),
+            read_all,
+            self._arrived,
+            self.ctx.cluster,
+            skip,
             on_error=lambda _reason: self._failed(),
             quiet=True,
         )
@@ -92,10 +98,51 @@ class Notifications(QObject):
     def _failed(self) -> None:
         self._busy = False
 
-    def _arrived(self, context: str, events: list[ClusterEvent]) -> None:
+    def _arrived(self, result: tuple[list[str], dict]) -> None:
         self._busy = False
-        self.store.merge(context, events)
+        contexts, found = result
+        self.backoff.forget(contexts)
+        news: list[Notification] = []
+        for context, events in found.items():
+            if isinstance(events, str):
+                self.backoff.failed(context)
+                continue
+            self.backoff.worked(context)
+            news += self.store.merge_changes(context, events)
         self.refresh()
+        self.announce([item for item in news if item.last_seen >= self._since])
+
+    def announce(self, items: list[Notification]) -> None:
+        """Tell the operating system about what is new, in one notice, unless
+        the person is looking at the app or turned it off."""
+        ui = self.ctx.ui
+        if not items or ui is None or not self.settings.system_notifications:
+            return
+        if ui.window.isActiveWindow():
+            return  # the bell is in front of them already
+        items = sorted(items, key=lambda one: one.last_seen, reverse=True)
+        if len(items) == 1:
+            one = items[0]
+            title = one.reason or QCoreApplication.translate(
+                "NotificationsExtension", "Notification"
+            )
+            about = f"{one.kind}/{one.name}" if one.name else ""
+            where = " · ".join(part for part in (about, one.context) if part)
+            message = f"{where}: {one.message}" if where else one.message
+        else:
+            title = QCoreApplication.translate(
+                "NotificationsExtension", "{count} new notifications"
+            ).format(count=len(items))
+            message = "\n".join(
+                f"{one.reason or one.message} · {one.context}".strip(" ·")
+                for one in items[:SHOWN_IN_A_NOTICE]
+            )
+        ui.show_system_notification(title, message[:MESSAGE_LIMIT], self.open_panel)
+
+    def open_panel(self) -> None:
+        """Show the panel, as the bell does; a notice of the system leads here."""
+        if not self.panel.opened:
+            self.toggle()
 
     def refresh(self) -> None:
         self.bell.set_unread(0 if self.panel.opened else self.store.unread())
@@ -117,6 +164,9 @@ class Notifications(QObject):
         """The app tells about an error, a warning or an update."""
         if self.store.add_notice(level, title, message, key, repeat, self._now()):
             self.refresh()
+            if level != INFO:  # an update is told by the app already
+                item = self.store.items()[0]
+                self.announce([item])
 
     def mark_read(self) -> None:
         self.store.mark_read(self._now())

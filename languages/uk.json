@@ -24,10 +24,14 @@
             "5 minutes": "5 хвилин",
             "How often the events of the cluster are read.": "Як часто читаються події кластера.",
             "Look for new events every": "Шукати нові події кожні",
+            "Shows a notice of the system, which opens the app when clicked, unless KubeScope is the window in front.": "Показує системне сповіщення, яке після натискання відкриває застосунок, якщо KubeScope не є вікном спереду.",
+            "Tell the operating system when something new happens": "Повідомляти операційну систему, коли трапляється щось нове",
             "{seconds} seconds": "{seconds} с"
         },
         "NotificationsExtension": {
-            "Notifications": "Сповіщення"
+            "Notification": "Сповіщення",
+            "Notifications": "Сповіщення",
+            "{count} new notifications": "Нових сповіщень: {count}"
         }
     }
 }

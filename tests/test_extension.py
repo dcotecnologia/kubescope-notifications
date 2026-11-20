@@ -12,46 +12,71 @@ def build(ctx, now=2000.0) -> Notifications:
     return Notifications(ctx, settings, store, now=lambda: now)  # type: ignore[arg-type]
 
 
-def test_the_bell_goes_to_the_top_bar_and_the_cluster_is_read_for_its_context(
+def test_the_bell_goes_to_the_top_bar_and_every_context_is_read(
     ctx, make_event
 ) -> None:
+    ctx.cluster.contexts = ["prod", "staging"]
     ctx.cluster.events = [make_event("a"), make_event("b", reason="Unhealthy")]
     notifications = build(ctx)
     assert ctx.ui.buttons == [("kubescope.notifications", notifications.bell)]
 
     notifications.poll()
 
-    assert ctx.cluster.asked == [("prod", ("Warning",))]
-    assert notifications.bell.unread == 2
-    assert len(notifications.store.items()) == 2
+    assert sorted(ctx.cluster.asked) == [
+        ("prod", ("Warning",)),
+        ("staging", ("Warning",)),
+    ]
+    assert notifications.bell.unread == 4  # the same events in each context
+    assert {item.context for item in notifications.store.items()} == {
+        "prod",
+        "staging",
+    }
 
 
-def test_nothing_is_read_without_a_context_or_while_a_read_is_going(ctx) -> None:
+def test_nothing_is_read_while_the_last_read_is_not_over(ctx) -> None:
     notifications = build(ctx)
-    ctx.current_context = None
-
-    notifications.poll()
-    ctx.current_context = "prod"
     notifications._busy = True
+
     notifications.poll()
 
     assert ctx.cluster.asked == []
 
 
-def test_a_read_that_fails_keeps_what_is_kept_and_the_next_one_goes_on(
+def test_a_context_that_fails_is_left_alone_for_a_while_and_the_others_go_on(
     ctx, make_event
+) -> None:
+    ctx.cluster.contexts = ["prod", "dead"]
+    ctx.cluster.events = [make_event()]
+    ctx.cluster.failures["dead"] = RuntimeError("not signed in")
+    notifications = build(ctx)
+
+    notifications.poll()  # dead fails
+    notifications.poll()  # and is skipped this round
+    notifications.poll()  # asked again
+
+    asked = [name for name, _types in ctx.cluster.asked]
+    assert asked.count("prod") == 3 and asked.count("dead") == 2
+    assert len(notifications.store.items()) == 1 and not notifications._busy
+    ctx.cluster.failures.clear()
+    for _ in range(3):
+        notifications.poll()
+    assert {item.context for item in notifications.store.items()} == {"prod", "dead"}
+
+
+def test_a_read_that_cannot_even_list_the_contexts_changes_nothing(
+    ctx, make_event, monkeypatch
 ) -> None:
     ctx.cluster.events = [make_event()]
     notifications = build(ctx)
     notifications.poll()
-    ctx.cluster.failure = RuntimeError("not signed in")
 
+    def broken():
+        raise RuntimeError("no kubeconfig")
+
+    monkeypatch.setattr(ctx.cluster, "list_contexts", broken)
     notifications.poll()
 
     assert len(notifications.store.items()) == 1 and not notifications._busy
-    ctx.cluster.failure = None
-    notifications.poll()
-    assert len(ctx.cluster.asked) == 3
 
 
 def test_the_bell_opens_the_panel_and_what_was_seen_is_read(ctx, make_event) -> None:
@@ -102,9 +127,14 @@ def test_the_interval_of_the_settings_sets_the_timer(ctx) -> None:
     )
     panel.load()
     assert panel.interval.currentData() == 30
+    assert panel.system.isChecked()  # on unless turned off
     panel.interval.setCurrentIndex(panel.interval.findData(120))
+    panel.system.setChecked(False)
     assert panel.save() is True
     assert notifications.timer.interval() == 120000
+    assert ctx.settings["system_notifications"] is False
+    panel.load()
+    assert not panel.system.isChecked()
 
 
 def test_a_time_that_is_not_one_of_the_usual_is_kept_in_the_list(ctx) -> None:
@@ -213,3 +243,85 @@ def test_the_width_the_person_dragged_is_kept_and_used_next_time(ctx) -> None:
     again = build(ctx)
     again.panel.open_panel()
     assert again.panel.width() == 520
+
+
+def test_new_events_are_told_to_the_system_in_one_notice_that_opens_the_panel(
+    ctx, make_event
+) -> None:
+    ctx.cluster.events = [make_event("new", last_seen=2000.0)]
+    notifications = build(ctx)
+
+    notifications.poll()
+
+    ((title, message, click),) = ctx.ui.system
+    assert title == "BackOff"
+    assert "Pod/api" in message and "prod" in message
+    click()
+    assert notifications.panel.opened
+    click()  # already open: it is left open
+    assert notifications.panel.opened
+
+
+def test_several_new_events_make_one_notice_with_the_first_ones_named(
+    ctx, make_event
+) -> None:
+    ctx.cluster.events = [
+        make_event(str(n), last_seen=2000.0 + n, reason=f"Reason{n}") for n in range(5)
+    ]
+    notifications = build(ctx)
+
+    notifications.poll()
+
+    ((title, message, _click),) = ctx.ui.system
+    assert title == "5 new notifications"
+    assert (
+        message.splitlines()[0] == "Reason4 · prod" and len(message.splitlines()) == 3
+    )
+
+
+def test_what_happened_before_the_start_or_is_not_new_is_not_told(
+    ctx, make_event
+) -> None:
+    ctx.cluster.events = [make_event(last_seen=100.0)]  # long before the start
+    notifications = build(ctx)
+
+    notifications.poll()
+    notifications.poll()
+
+    assert ctx.ui.system == [] and notifications.bell.unread == 1
+
+
+def test_the_system_is_not_told_when_it_is_turned_off_or_the_window_is_in_front(
+    ctx, make_event, monkeypatch
+) -> None:
+    ctx.cluster.events = [make_event("a", last_seen=2000.0)]
+    notifications = build(ctx)
+    ctx.settings["system_notifications"] = False
+    notifications.poll()
+    assert ctx.ui.system == []
+
+    ctx.settings["system_notifications"] = True
+    ctx.cluster.events = [make_event("b", last_seen=2001.0)]
+    monkeypatch.setattr(ctx.ui.window, "isActiveWindow", lambda: True)
+    notifications.poll()
+    assert ctx.ui.system == []
+
+
+def test_an_error_of_the_app_is_told_to_the_system_but_an_update_is_not(ctx) -> None:
+    notifications = build(ctx)
+
+    notifications.notice("error", "Boom", "it broke", "e", True)
+    notifications.notice("info", "Update", "9.9.9", "u", False)
+    notifications.notice("error", "Boom", "it broke", "e", False)  # nothing new
+
+    ((title, message, _click),) = ctx.ui.system
+    assert (title, message) == ("Boom", "it broke")
+
+
+def test_a_long_message_is_cut_for_the_system(ctx, make_event) -> None:
+    ctx.cluster.events = [make_event(last_seen=2000.0, message="x" * 1000)]
+    notifications = build(ctx)
+
+    notifications.poll()
+
+    assert len(ctx.ui.system[0][1]) == 220

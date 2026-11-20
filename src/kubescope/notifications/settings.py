@@ -46,3 +46,13 @@ class NotificationSettings:
     @panel_width.setter
     def panel_width(self, value: int) -> None:
         self._store.set("panel_width", min(max(int(value), MIN_WIDTH), MAX_WIDTH))
+
+    @property
+    def system_notifications(self) -> bool:
+        """Whether a new notification is also told by the operating system;
+        on unless the person turned it off."""
+        return self._store.get("system_notifications", True) is not False
+
+    @system_notifications.setter
+    def system_notifications(self, value: bool) -> None:
+        self._store.set("system_notifications", bool(value))

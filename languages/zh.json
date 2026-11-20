@@ -24,10 +24,14 @@
             "5 minutes": "5 分钟",
             "How often the events of the cluster are read.": "读取集群事件的频率。",
             "Look for new events every": "查找新事件的间隔",
+            "Shows a notice of the system, which opens the app when clicked, unless KubeScope is the window in front.": "显示系统通知，点击后打开应用；当 KubeScope 是最前面的窗口时不显示。",
+            "Tell the operating system when something new happens": "有新情况时通知操作系统",
             "{seconds} seconds": "{seconds} 秒"
         },
         "NotificationsExtension": {
-            "Notifications": "通知"
+            "Notification": "通知",
+            "Notifications": "通知",
+            "{count} new notifications": "{count} 条新通知"
         }
     }
 }

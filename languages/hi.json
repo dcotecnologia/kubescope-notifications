@@ -24,10 +24,14 @@
             "5 minutes": "5 मिनट",
             "How often the events of the cluster are read.": "क्लस्टर की घटनाएँ कितनी बार पढ़ी जाती हैं।",
             "Look for new events every": "नई घटनाएँ खोजें हर",
+            "Shows a notice of the system, which opens the app when clicked, unless KubeScope is the window in front.": "सिस्टम की सूचना दिखाता है, जिस पर क्लिक करने से ऐप खुलता है, जब तक KubeScope सबसे आगे की विंडो न हो।",
+            "Tell the operating system when something new happens": "कुछ नया होने पर ऑपरेटिंग सिस्टम को बताएँ",
             "{seconds} seconds": "{seconds} सेकंड"
         },
         "NotificationsExtension": {
-            "Notifications": "सूचनाएँ"
+            "Notification": "सूचना",
+            "Notifications": "सूचनाएँ",
+            "{count} new notifications": "{count} नई सूचनाएँ"
         }
     }
 }

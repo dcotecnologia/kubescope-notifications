@@ -50,6 +50,7 @@ class FakeUi:
         self.central = QWidget(self.window)
         self.central.resize(900, 600)
         self.buttons: list[tuple[str, QWidget]] = []
+        self.system: list[tuple] = []  # what was told to the operating system
 
     def themed(self, color, text=False):
         return color
@@ -58,6 +59,10 @@ class FakeUi:
         button.setParent(self.central)
         button.move(840, 7)
         self.buttons.append((owner, button))
+
+    def show_system_notification(self, title, message, on_click=None):
+        self.system.append((title, message, on_click))
+        return True
 
     def run_action(self, function, on_success, *arguments, on_error=None, quiet=False):
         try:
@@ -72,14 +77,20 @@ class FakeUi:
 
 class FakeCluster:
     def __init__(self) -> None:
-        self.events: list = []
-        self.failure: Exception | None = None
+        self.contexts: list[str] = ["prod"]
+        self.events: list = []  # what every context answers
+        self.failure: Exception | None = None  # every context fails
+        self.failures: dict[str, Exception] = {}  # these contexts fail
         self.asked: list[tuple] = []
+
+    def list_contexts(self):
+        return list(self.contexts)
 
     def get_events(self, context, types=("Warning",)):
         self.asked.append((context, types))
-        if self.failure is not None:
-            raise self.failure
+        failure = self.failures.get(context) or self.failure
+        if failure is not None:
+            raise failure
         return self.events
 
 

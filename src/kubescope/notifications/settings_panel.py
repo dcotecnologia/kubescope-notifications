@@ -3,7 +3,7 @@ looked at."""
 
 from collections.abc import Callable
 
-from PySide6.QtWidgets import QComboBox, QFormLayout, QWidget
+from PySide6.QtWidgets import QCheckBox, QComboBox, QFormLayout, QWidget
 
 from kubescope.notifications.settings import DEFAULT, NotificationSettings
 
@@ -24,6 +24,16 @@ class NotificationSettingsPanel(QWidget):
             self.tr("How often the events of the cluster are read.")
         )
         form.addRow(self.tr("Look for new events every"), self.interval)
+        self.system = QCheckBox(
+            self.tr("Tell the operating system when something new happens")
+        )
+        self.system.setToolTip(
+            self.tr(
+                "Shows a notice of the system, which opens the app when clicked, "
+                "unless KubeScope is the window in front."
+            )
+        )
+        form.addRow(self.system)
         self._fill(DEFAULT)
 
     def _choices(self) -> list[tuple[str, int]]:
@@ -51,8 +61,10 @@ class NotificationSettingsPanel(QWidget):
 
     def load(self) -> None:
         self._fill(self.settings.interval)
+        self.system.setChecked(self.settings.system_notifications)
 
     def save(self) -> bool:
         self.settings.interval = self.interval.currentData()
+        self.settings.system_notifications = self.system.isChecked()
         self._apply()
         return True
