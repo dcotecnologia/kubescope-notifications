@@ -3,30 +3,30 @@
     "rtl": false,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "清除",
+            "Error": "錯誤",
+            "Event": "事件",
+            "Mark all as read": "全部標示為已讀",
+            "Nothing to report. Warnings and errors will show here.": "沒有需要回報的內容。警告和錯誤會顯示在這裡。",
+            "Notifications": "通知",
+            "Warning": "警告",
+            "just now": "剛剛",
+            "{amount}{unit} ago": "{amount}{unit}前"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "1 小時",
+            "1 minute": "1 分鐘",
+            "15 minutes": "15 分鐘",
+            "15 seconds": "15 秒",
+            "2 minutes": "2 分鐘",
+            "30 seconds": "30 秒",
+            "5 minutes": "5 分鐘",
+            "How often the events of the cluster are read.": "讀取叢集事件的頻率。",
+            "Look for new events every": "尋找新事件的間隔",
+            "{seconds} seconds": "{seconds} 秒"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "通知"
         }
     }
 }

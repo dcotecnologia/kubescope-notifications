@@ -3,30 +3,30 @@
     "rtl": true,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "پاک کردن",
+            "Error": "خطا",
+            "Event": "رویداد",
+            "Mark all as read": "علامت‌گذاری همه به‌عنوان خوانده‌شده",
+            "Nothing to report. Warnings and errors will show here.": "چیزی برای گزارش نیست. هشدارها و خطاها اینجا نمایش داده می‌شوند.",
+            "Notifications": "اعلان‌ها",
+            "Warning": "هشدار",
+            "just now": "همین الان",
+            "{amount}{unit} ago": "{amount}{unit} پیش"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "۱ ساعت",
+            "1 minute": "۱ دقیقه",
+            "15 minutes": "۱۵ دقیقه",
+            "15 seconds": "۱۵ ثانیه",
+            "2 minutes": "۲ دقیقه",
+            "30 seconds": "۳۰ ثانیه",
+            "5 minutes": "۵ دقیقه",
+            "How often the events of the cluster are read.": "هر چند وقت رویدادهای خوشه خوانده می‌شوند.",
+            "Look for new events every": "جستجوی رویدادهای جدید هر",
+            "{seconds} seconds": "{seconds} ثانیه"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "اعلان‌ها"
         }
     }
 }

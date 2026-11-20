@@ -3,30 +3,30 @@
     "rtl": false,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "Temizle",
+            "Error": "Hata",
+            "Event": "Olay",
+            "Mark all as read": "Tümünü okundu olarak işaretle",
+            "Nothing to report. Warnings and errors will show here.": "Bildirilecek bir şey yok. Uyarılar ve hatalar burada görünecek.",
+            "Notifications": "Bildirimler",
+            "Warning": "Uyarı",
+            "just now": "az önce",
+            "{amount}{unit} ago": "{amount}{unit} önce"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "1 saat",
+            "1 minute": "1 dakika",
+            "15 minutes": "15 dakika",
+            "15 seconds": "15 saniye",
+            "2 minutes": "2 dakika",
+            "30 seconds": "30 saniye",
+            "5 minutes": "5 dakika",
+            "How often the events of the cluster are read.": "Kümenin olaylarının ne sıklıkla okunacağı.",
+            "Look for new events every": "Yeni olayları şu aralıkla ara:",
+            "{seconds} seconds": "{seconds} saniye"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "Bildirimler"
         }
     }
 }

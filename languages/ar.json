@@ -3,30 +3,30 @@
     "rtl": true,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "مسح",
+            "Error": "خطأ",
+            "Event": "حدث",
+            "Mark all as read": "وضع علامة مقروء على الكل",
+            "Nothing to report. Warnings and errors will show here.": "لا شيء للإبلاغ عنه. ستظهر التحذيرات والأخطاء هنا.",
+            "Notifications": "الإشعارات",
+            "Warning": "تحذير",
+            "just now": "الآن",
+            "{amount}{unit} ago": "منذ {amount}{unit}"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "ساعة واحدة",
+            "1 minute": "دقيقة واحدة",
+            "15 minutes": "15 دقيقة",
+            "15 seconds": "15 ثانية",
+            "2 minutes": "دقيقتان",
+            "30 seconds": "30 ثانية",
+            "5 minutes": "5 دقائق",
+            "How often the events of the cluster are read.": "عدد مرات قراءة أحداث العنقود.",
+            "Look for new events every": "البحث عن أحداث جديدة كل",
+            "{seconds} seconds": "{seconds} ثانية"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "الإشعارات"
         }
     }
 }

@@ -3,30 +3,30 @@
     "rtl": false,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "지우기",
+            "Error": "오류",
+            "Event": "이벤트",
+            "Mark all as read": "모두 읽음으로 표시",
+            "Nothing to report. Warnings and errors will show here.": "보고할 내용이 없습니다. 경고와 오류가 여기에 표시됩니다.",
+            "Notifications": "알림",
+            "Warning": "경고",
+            "just now": "방금",
+            "{amount}{unit} ago": "{amount}{unit} 전"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "1시간",
+            "1 minute": "1분",
+            "15 minutes": "15분",
+            "15 seconds": "15초",
+            "2 minutes": "2분",
+            "30 seconds": "30초",
+            "5 minutes": "5분",
+            "How often the events of the cluster are read.": "클러스터의 이벤트를 읽는 주기입니다.",
+            "Look for new events every": "새 이벤트 확인 주기",
+            "{seconds} seconds": "{seconds}초"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "알림"
         }
     }
 }

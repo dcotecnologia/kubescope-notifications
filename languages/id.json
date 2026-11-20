@@ -3,30 +3,30 @@
     "rtl": false,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "Hapus",
+            "Error": "Kesalahan",
+            "Event": "Peristiwa",
+            "Mark all as read": "Tandai semua sudah dibaca",
+            "Nothing to report. Warnings and errors will show here.": "Tidak ada yang dilaporkan. Peringatan dan kesalahan akan muncul di sini.",
+            "Notifications": "Notifikasi",
+            "Warning": "Peringatan",
+            "just now": "baru saja",
+            "{amount}{unit} ago": "{amount}{unit} lalu"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "1 jam",
+            "1 minute": "1 menit",
+            "15 minutes": "15 menit",
+            "15 seconds": "15 detik",
+            "2 minutes": "2 menit",
+            "30 seconds": "30 detik",
+            "5 minutes": "5 menit",
+            "How often the events of the cluster are read.": "Seberapa sering peristiwa klaster dibaca.",
+            "Look for new events every": "Cari peristiwa baru setiap",
+            "{seconds} seconds": "{seconds} detik"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "Notifikasi"
         }
     }
 }

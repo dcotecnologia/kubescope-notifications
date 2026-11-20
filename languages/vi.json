@@ -3,30 +3,30 @@
     "rtl": false,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "Xóa",
+            "Error": "Lỗi",
+            "Event": "Sự kiện",
+            "Mark all as read": "Đánh dấu tất cả là đã đọc",
+            "Nothing to report. Warnings and errors will show here.": "Không có gì để báo. Cảnh báo và lỗi sẽ hiện ở đây.",
+            "Notifications": "Thông báo",
+            "Warning": "Cảnh báo",
+            "just now": "vừa xong",
+            "{amount}{unit} ago": "{amount}{unit} trước"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "1 giờ",
+            "1 minute": "1 phút",
+            "15 minutes": "15 phút",
+            "15 seconds": "15 giây",
+            "2 minutes": "2 phút",
+            "30 seconds": "30 giây",
+            "5 minutes": "5 phút",
+            "How often the events of the cluster are read.": "Tần suất đọc các sự kiện của cụm.",
+            "Look for new events every": "Tìm sự kiện mới mỗi",
+            "{seconds} seconds": "{seconds} giây"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "Thông báo"
         }
     }
 }

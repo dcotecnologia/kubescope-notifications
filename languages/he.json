@@ -3,30 +3,30 @@
     "rtl": true,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "נקה",
+            "Error": "שגיאה",
+            "Event": "אירוע",
+            "Mark all as read": "סמן הכול כנקרא",
+            "Nothing to report. Warnings and errors will show here.": "אין מה לדווח. אזהרות ושגיאות יופיעו כאן.",
+            "Notifications": "התראות",
+            "Warning": "אזהרה",
+            "just now": "זה עתה",
+            "{amount}{unit} ago": "לפני {amount}{unit}"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "שעה אחת",
+            "1 minute": "דקה אחת",
+            "15 minutes": "15 דקות",
+            "15 seconds": "15 שניות",
+            "2 minutes": "2 דקות",
+            "30 seconds": "30 שניות",
+            "5 minutes": "5 דקות",
+            "How often the events of the cluster are read.": "באיזו תדירות נקראים אירועי האשכול.",
+            "Look for new events every": "חפש אירועים חדשים כל",
+            "{seconds} seconds": "{seconds} שניות"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "התראות"
         }
     }
 }

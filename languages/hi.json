@@ -3,30 +3,30 @@
     "rtl": false,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "साफ़ करें",
+            "Error": "त्रुटि",
+            "Event": "घटना",
+            "Mark all as read": "सभी को पढ़ा हुआ चिह्नित करें",
+            "Nothing to report. Warnings and errors will show here.": "बताने के लिए कुछ नहीं है। चेतावनियाँ और त्रुटियाँ यहाँ दिखेंगी।",
+            "Notifications": "सूचनाएँ",
+            "Warning": "चेतावनी",
+            "just now": "अभी",
+            "{amount}{unit} ago": "{amount}{unit} पहले"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "1 घंटा",
+            "1 minute": "1 मिनट",
+            "15 minutes": "15 मिनट",
+            "15 seconds": "15 सेकंड",
+            "2 minutes": "2 मिनट",
+            "30 seconds": "30 सेकंड",
+            "5 minutes": "5 मिनट",
+            "How often the events of the cluster are read.": "क्लस्टर की घटनाएँ कितनी बार पढ़ी जाती हैं।",
+            "Look for new events every": "नई घटनाएँ खोजें हर",
+            "{seconds} seconds": "{seconds} सेकंड"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "सूचनाएँ"
         }
     }
 }

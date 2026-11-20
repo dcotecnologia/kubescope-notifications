@@ -3,30 +3,30 @@
     "rtl": false,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "クリア",
+            "Error": "エラー",
+            "Event": "イベント",
+            "Mark all as read": "すべて既読にする",
+            "Nothing to report. Warnings and errors will show here.": "報告するものはありません。警告とエラーはここに表示されます。",
+            "Notifications": "通知",
+            "Warning": "警告",
+            "just now": "たった今",
+            "{amount}{unit} ago": "{amount}{unit}前"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "1 時間",
+            "1 minute": "1 分",
+            "15 minutes": "15 分",
+            "15 seconds": "15 秒",
+            "2 minutes": "2 分",
+            "30 seconds": "30 秒",
+            "5 minutes": "5 分",
+            "How often the events of the cluster are read.": "クラスターのイベントを読み取る間隔です。",
+            "Look for new events every": "新しいイベントを確認する間隔",
+            "{seconds} seconds": "{seconds} 秒"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "通知"
         }
     }
 }

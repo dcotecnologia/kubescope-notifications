@@ -3,30 +3,30 @@
     "rtl": false,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "Очистити",
+            "Error": "Помилка",
+            "Event": "Подія",
+            "Mark all as read": "Позначити все як прочитане",
+            "Nothing to report. Warnings and errors will show here.": "Нічого повідомляти. Попередження та помилки з’являться тут.",
+            "Notifications": "Сповіщення",
+            "Warning": "Попередження",
+            "just now": "щойно",
+            "{amount}{unit} ago": "{amount}{unit} тому"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "1 година",
+            "1 minute": "1 хвилина",
+            "15 minutes": "15 хвилин",
+            "15 seconds": "15 секунд",
+            "2 minutes": "2 хвилини",
+            "30 seconds": "30 секунд",
+            "5 minutes": "5 хвилин",
+            "How often the events of the cluster are read.": "Як часто читаються події кластера.",
+            "Look for new events every": "Шукати нові події кожні",
+            "{seconds} seconds": "{seconds} с"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "Сповіщення"
         }
     }
 }

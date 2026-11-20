@@ -3,30 +3,30 @@
     "rtl": false,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "ล้าง",
+            "Error": "ข้อผิดพลาด",
+            "Event": "เหตุการณ์",
+            "Mark all as read": "ทำเครื่องหมายว่าอ่านทั้งหมดแล้ว",
+            "Nothing to report. Warnings and errors will show here.": "ไม่มีอะไรต้องรายงาน คำเตือนและข้อผิดพลาดจะแสดงที่นี่",
+            "Notifications": "การแจ้งเตือน",
+            "Warning": "คำเตือน",
+            "just now": "เมื่อสักครู่",
+            "{amount}{unit} ago": "{amount}{unit} ที่แล้ว"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "1 ชั่วโมง",
+            "1 minute": "1 นาที",
+            "15 minutes": "15 นาที",
+            "15 seconds": "15 วินาที",
+            "2 minutes": "2 นาที",
+            "30 seconds": "30 วินาที",
+            "5 minutes": "5 นาที",
+            "How often the events of the cluster are read.": "ความถี่ในการอ่านเหตุการณ์ของคลัสเตอร์",
+            "Look for new events every": "ค้นหาเหตุการณ์ใหม่ทุก",
+            "{seconds} seconds": "{seconds} วินาที"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "การแจ้งเตือน"
         }
     }
 }

@@ -3,30 +3,30 @@
     "rtl": false,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "清除",
+            "Error": "错误",
+            "Event": "事件",
+            "Mark all as read": "全部标为已读",
+            "Nothing to report. Warnings and errors will show here.": "没有需要报告的内容。警告和错误会显示在这里。",
+            "Notifications": "通知",
+            "Warning": "警告",
+            "just now": "刚刚",
+            "{amount}{unit} ago": "{amount}{unit}前"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "1 小时",
+            "1 minute": "1 分钟",
+            "15 minutes": "15 分钟",
+            "15 seconds": "15 秒",
+            "2 minutes": "2 分钟",
+            "30 seconds": "30 秒",
+            "5 minutes": "5 分钟",
+            "How often the events of the cluster are read.": "读取集群事件的频率。",
+            "Look for new events every": "查找新事件的间隔",
+            "{seconds} seconds": "{seconds} 秒"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "通知"
         }
     }
 }

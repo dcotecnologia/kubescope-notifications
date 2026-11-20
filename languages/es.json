@@ -3,30 +3,30 @@
     "rtl": false,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "Borrar",
+            "Error": "Error",
+            "Event": "Evento",
+            "Mark all as read": "Marcar todas como leídas",
+            "Nothing to report. Warnings and errors will show here.": "Nada que informar. Las advertencias y los errores aparecerán aquí.",
+            "Notifications": "Notificaciones",
+            "Warning": "Advertencia",
+            "just now": "justo ahora",
+            "{amount}{unit} ago": "hace {amount}{unit}"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "1 hora",
+            "1 minute": "1 minuto",
+            "15 minutes": "15 minutos",
+            "15 seconds": "15 segundos",
+            "2 minutes": "2 minutos",
+            "30 seconds": "30 segundos",
+            "5 minutes": "5 minutos",
+            "How often the events of the cluster are read.": "Cada cuánto se leen los eventos del clúster.",
+            "Look for new events every": "Buscar eventos nuevos cada",
+            "{seconds} seconds": "{seconds} segundos"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "Notificaciones"
         }
     }
 }

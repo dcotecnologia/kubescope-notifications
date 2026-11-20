@@ -3,30 +3,30 @@
     "rtl": false,
     "strings": {
         "NotificationPanel": {
-            "Clear": "",
-            "Error": "",
-            "Event": "",
-            "Mark all as read": "",
-            "Nothing to report. Warnings and errors will show here.": "",
-            "Notifications": "",
-            "Warning": "",
-            "just now": "",
-            "{amount}{unit} ago": ""
+            "Clear": "Wissen",
+            "Error": "Fout",
+            "Event": "Gebeurtenis",
+            "Mark all as read": "Alles als gelezen markeren",
+            "Nothing to report. Warnings and errors will show here.": "Niets te melden. Waarschuwingen en fouten verschijnen hier.",
+            "Notifications": "Meldingen",
+            "Warning": "Waarschuwing",
+            "just now": "zojuist",
+            "{amount}{unit} ago": "{amount}{unit} geleden"
         },
         "NotificationSettingsPanel": {
-            "1 hour": "",
-            "1 minute": "",
-            "15 minutes": "",
-            "15 seconds": "",
-            "2 minutes": "",
-            "30 seconds": "",
-            "5 minutes": "",
-            "How often the events of the cluster are read.": "",
-            "Look for new events every": "",
-            "{seconds} seconds": ""
+            "1 hour": "1 uur",
+            "1 minute": "1 minuut",
+            "15 minutes": "15 minuten",
+            "15 seconds": "15 seconden",
+            "2 minutes": "2 minuten",
+            "30 seconds": "30 seconden",
+            "5 minutes": "5 minuten",
+            "How often the events of the cluster are read.": "Hoe vaak de gebeurtenissen van het cluster worden gelezen.",
+            "Look for new events every": "Zoek nieuwe gebeurtenissen elke",
+            "{seconds} seconds": "{seconds} seconden"
         },
         "NotificationsExtension": {
-            "Notifications": ""
+            "Notifications": "Meldingen"
         }
     }
 }
