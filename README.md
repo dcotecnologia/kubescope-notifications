@@ -19,7 +19,7 @@ and nothing else of the app. Install it in **Settings → Extensions**.
 ## What it does
 
 - **Looks at every cluster for you.** Every context of your kubeconfig is read in the background, four at a time,
-  every 60 seconds (set in **Settings → Notifications**, from 15 seconds to an hour), and the Warning events are
+  every 60 seconds, the first look 30 seconds after the start (set in **Settings → Notifications**, from 15 seconds to an hour), and the Warning events are
   kept. A context that cannot be read, because it is not signed in or the cluster is away, keeps what it had and is
   left alone for a growing number of rounds (up to 30), so a few dead contexts do not run a sign-in command at every
   look.
@@ -40,7 +40,10 @@ and nothing else of the app. Install it in **Settings → Extensions**.
 - **Click to go there.** A card names its context, and clicking it (or the notice of the system, when it is about one
   thing) switches KubeScope to that context and closes the panel; an error or a warning of the app goes back to the context that was in use when it happened, and only the notice of a new
   version has none.
-- **A bell with a count.** The red number is what happened since you last opened the panel.
+- **Read and unread.** An unread card is highlighted; clicking a card reads it, and it is crossed out. **Mark all as read**
+  reads them all. Opening the panel does not read anything, and an alert that happens again after you read it is unread
+  again, unless it is the same error coming back within 30 minutes, which only counts. The red number on the bell is
+  how many are unread.
 - **A panel that slides in.** Click the bell: the list opens from the right, the newest first, with the object,
   the namespace, the message and how long ago. **Mark all as read** and **Clear** are in its header.
 - **A panel you can resize.** Drag its left edge to make it wider or narrower (300 to 900 px, as far as the window allows); the width is kept.

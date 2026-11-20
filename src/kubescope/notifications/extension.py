@@ -19,13 +19,15 @@ from kubescope.notifications.panel import NotificationPanel
 from kubescope.notifications.reader import Backoff, read_all
 from kubescope.notifications.settings import NotificationSettings
 from kubescope.notifications.settings_panel import NotificationSettingsPanel
-from kubescope.notifications.store import INFO, Notification, NotificationStore
+from kubescope.notifications.store import ERROR, INFO, Notification, NotificationStore
 
 TITLE = "Notifications"
 GAP = 6  # between the top bar and the panel
+FIRST_LOOK_MS = 30_000  # before the first look at the clusters
 SINCE = 60.0  # seconds before the start from which an event is still news
 SHOWN_IN_A_NOTICE = 3  # notifications named in one notice of the system
 MESSAGE_LIMIT = 220  # characters of a message in a notice of the system
+REPEAT_WINDOW = 1800.0  # seconds in which the same notice of the app only counts
 COOLDOWN = 1800.0  # seconds before the system is told again about the same alert
 REASON_LIMIT = 300  # characters of why a context could not be read
 
@@ -68,12 +70,20 @@ class Notifications(QObject):
         self.panel.on_mark_read = self.mark_read
         self.panel.on_clear = self.clear
         self.panel.on_open = self.open_context
+        self.panel.is_unread = self.store.is_unread
         self.panel.on_resized = lambda width: setattr(
             self.settings, "panel_width", width
         )
         self.panel.set_panel_width(self.settings.panel_width)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.poll)
+        # the first look comes a while after the start, so that an extension
+        # reloaded again and again while it is written does not read every
+        # cluster each time
+        self.first_look = QTimer(self)
+        self.first_look.setSingleShot(True)
+        self.first_look.timeout.connect(self.poll)
+        self.first_look.start(FIRST_LOOK_MS)
         ui.add_top_bar_button(ctx.id, self.bell)
         self.apply_settings()
         self.refresh()
@@ -129,6 +139,15 @@ class Notifications(QObject):
                     self._now(),
                     context,
                 )
+                if added:
+                    # the errors the app showed for this context say the same
+                    self.store.discard_where(
+                        lambda one, name=context: (
+                            one.context == name
+                            and one.level == ERROR
+                            and one.key.split("\n", 1)[1].startswith("error:")
+                        )
+                    )
                 if added and (item := self.store.find(key)) is not None:
                     news.append(item)  # told once, when it first cannot be read
                 continue
@@ -177,7 +196,10 @@ class Notifications(QObject):
         ui.show_system_notification(title, message[:MESSAGE_LIMIT], click)
 
     def open_context(self, item: Notification) -> None:
-        """Go to the context a notification belongs to, and leave the panel."""
+        """Read a notification and go to the context it belongs to, if it is
+        about one, leaving the panel."""
+        self.store.mark_item_read(item.key, self._now())  # clicking reads it
+        self.refresh()
         ui = self.ctx.ui
         if ui is None or not item.context:
             return
@@ -194,7 +216,7 @@ class Notifications(QObject):
             self.toggle()
 
     def refresh(self) -> None:
-        self.bell.set_unread(0 if self.panel.opened else self.store.unread())
+        self.bell.set_unread(self.store.unread())
         self.panel.show_items(self.store.items(), self._now())
 
     def toggle(self) -> None:
@@ -204,8 +226,6 @@ class Notifications(QObject):
         self.panel.show_items(self.store.items(), self._now())
         self.panel.open_panel()
         self.bell.setChecked(True)
-        self.bell.set_unread(0)
-        self.store.mark_read(self._now())
 
     def notice(
         self,
@@ -219,7 +239,15 @@ class Notifications(QObject):
         """The app tells about an error, a warning or an update, and the
         context it is about when it is about one."""
         now = self._now()
-        if self.store.add_notice(level, title, message, key, repeat, now, context):
+        if (
+            level == ERROR
+            and context
+            and self.store.find(f"unreadable:{context}") is not None
+        ):
+            return  # the context that cannot be read says it already
+        if self.store.add_notice(
+            level, title, message, key, repeat, now, context, REPEAT_WINDOW
+        ):
             self.refresh()
             item = self.store.find(key)
             if level != INFO and item is not None:  # the app tells of an update
@@ -238,13 +266,18 @@ class Notifications(QObject):
         self.refresh()
 
     def context_changed(self) -> None:
-        self.poll()
+        """Another context was chosen: what is kept is shown as it is; the next
+        look comes with the timer, not at every switch."""
+        self.refresh()
 
     def close(self) -> None:
         """The extension is unloaded: stop looking and take the panel away."""
         self.timer.stop()
+        self.first_look.stop()
         self.panel.close()
         self.panel.deleteLater()
+        self.bell.hide()
+        self.bell.deleteLater()  # the top bar must not keep a bell nobody answers
         self.deleteLater()
 
 
@@ -264,4 +297,3 @@ def activate(ctx: Context) -> None:
         lambda: NotificationSettingsPanel(settings, notifications.apply_settings),
     )
     ctx.on_unload(notifications.close)
-    QTimer.singleShot(0, notifications.poll)  # look once the window is up

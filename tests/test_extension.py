@@ -79,7 +79,9 @@ def test_a_read_that_cannot_even_list_the_contexts_changes_nothing(
     assert len(notifications.store.items()) == 1 and not notifications._busy
 
 
-def test_the_bell_opens_the_panel_and_what_was_seen_is_read(ctx, make_event) -> None:
+def test_the_bell_opens_the_panel_and_what_is_in_it_stays_unread_until_clicked(
+    ctx, make_event
+) -> None:
     ctx.cluster.events = [make_event()]
     notifications = build(ctx)
     notifications.poll()
@@ -88,13 +90,22 @@ def test_the_bell_opens_the_panel_and_what_was_seen_is_read(ctx, make_event) -> 
     notifications.bell.click()
 
     assert notifications.panel.opened and notifications.bell.isChecked()
+    assert notifications.bell.unread == 1  # opening it reads nothing
+    (card,) = cards_of(notifications)
+    assert card.unread
+
+    click_on(card)  # clicking one reads it (and goes to its context)
     assert notifications.bell.unread == 0 and notifications.store.unread() == 0
+    assert not notifications.panel.opened  # it went to the context of the card
+    notifications.bell.click()
+    (card,) = cards_of(notifications)
+    assert not card.unread and notifications.panel.opened
 
     notifications.bell.click()  # again: it closes
     assert not notifications.panel.opened and not notifications.bell.isChecked()
 
 
-def test_an_event_that_comes_while_the_panel_is_open_does_not_ask_for_attention(
+def test_an_event_that_comes_while_the_panel_is_open_counts_as_unread(
     ctx, make_event
 ) -> None:
     notifications = build(ctx, now=500.0)
@@ -103,7 +114,26 @@ def test_an_event_that_comes_while_the_panel_is_open_does_not_ask_for_attention(
 
     notifications.poll()
 
-    assert notifications.bell.unread == 0 and len(notifications.store.items()) == 1
+    assert notifications.bell.unread == 1 and len(notifications.store.items()) == 1
+
+
+def test_an_alert_that_happens_again_after_it_was_read_is_unread_again(
+    ctx, make_event
+) -> None:
+    clock = [2000.0]
+    settings = NotificationSettings(ctx.settings)
+    store = NotificationStore(ctx.data_directory / "n.json")
+    notifications = Notifications(ctx, settings, store, now=lambda: clock[0])  # type: ignore[arg-type]
+    ctx.cluster.events = [make_event("a", name="api", last_seen=1990.0)]
+    notifications.poll()
+    notifications.open_context(notifications.store.items()[0])
+    assert notifications.store.unread() == 0
+
+    clock[0] = 3000.0
+    ctx.cluster.events = [make_event("b", name="api", last_seen=2900.0, count=3)]
+    notifications.poll()
+
+    assert notifications.store.unread() == 1
 
 
 def test_mark_all_as_read_and_clear(ctx, make_event) -> None:
@@ -159,7 +189,7 @@ def test_activating_it_wires_the_events_the_settings_and_the_cleanup(
 
     assert [title for title, _ in ctx.sections] == ["Notifications"]
     ctx.events.fire("context_changed", context="prod")
-    assert ctx.cluster.asked == [("prod", ("Warning",))]
+    assert ctx.cluster.asked == []  # switching does not read every cluster
     ctx.events.fire("theme_changed")
     (_title, factory) = ctx.sections[0]
     assert isinstance(factory(), NotificationSettingsPanel)
@@ -438,9 +468,10 @@ def test_a_context_that_cannot_be_read_is_listed_with_why_and_goes_when_it_can(
     assert one.message == "exec: failed"  # the first line of what it said
     ((title, message, click),) = ctx.ui.system  # told once, when it first fails
     assert title == "Could not read dead" and message == "dead: exec: failed"
+    assert notifications.bell.unread == 1
     click()
     assert ctx.invoked[-1][1]["context"] == "dead"
-    assert notifications.bell.unread == 1
+    assert notifications.bell.unread == 0  # the click read it
 
     ctx.cluster.failures.clear()
     for _ in range(3):  # after its pause
@@ -513,3 +544,80 @@ def test_an_event_that_comes_back_is_not_told_again_within_the_cooldown(
 
     assert len(ctx.ui.system) == 1
     assert len(notifications.store.items()) == 1
+
+
+def test_the_same_error_coming_back_when_switching_contexts_only_counts(ctx) -> None:
+    clock = [2000.0]
+    settings = NotificationSettings(ctx.settings)
+    store = NotificationStore(ctx.data_directory / "n.json")
+    notifications = Notifications(ctx, settings, store, now=lambda: clock[0])  # type: ignore[arg-type]
+    notifications.notice(
+        "error", "Login failed", "expired", "error:prod:x", True, "prod"
+    )
+    notifications.open_context(notifications.store.items()[0])  # the person read it
+    assert notifications.bell.unread == 0
+
+    for _ in range(4):  # switching back and forth: the banner shows it each time
+        clock[0] += 20
+        notifications.notice(
+            "error", "Login failed", "expired", "error:prod:x", True, "prod"
+        )
+
+    (one,) = notifications.store.items()
+    assert one.count == 5 and notifications.bell.unread == 0  # counted, not news
+    assert len(ctx.ui.system) == 1
+
+    clock[0] += 3600  # much later it is news again
+    notifications.notice(
+        "error", "Login failed", "expired", "error:prod:x", True, "prod"
+    )
+    assert notifications.bell.unread == 1
+
+
+def test_an_error_of_a_context_that_cannot_be_read_is_folded_into_its_notice(
+    ctx,
+) -> None:
+    ctx.cluster.contexts = ["dead"]
+    ctx.cluster.failures["dead"] = RuntimeError("token expired")
+    notifications = build(ctx)
+    notifications.notice("error", "Login failed", "x", "error:dead:a", True, "dead")
+    notifications.notice("error", "Other", "y", "error:other:b", True, "other")
+    notifications.notice("warning", "Careful", "z", "w", True, "dead")
+    assert len(notifications.store.items()) == 3
+
+    notifications.poll()  # it cannot be read: its own notice takes the place
+
+    reasons = sorted(item.reason for item in notifications.store.items())
+    assert reasons == ["Careful", "Could not read dead", "Other"]  # not the login one
+
+    notifications.notice("error", "Login failed", "x", "error:dead:a", True, "dead")
+    assert "Login failed" not in [item.reason for item in notifications.store.items()]
+
+
+def test_the_first_look_waits_and_a_switch_of_context_does_not_read_the_clusters(
+    ctx,
+) -> None:
+    notifications = build(ctx)
+
+    assert notifications.first_look.isActive()
+    assert notifications.first_look.interval() == 30_000
+    notifications.context_changed()
+
+    assert ctx.cluster.asked == []
+    notifications.first_look.timeout.emit()
+    assert [name for name, _types in ctx.cluster.asked] == ["prod"]
+
+
+def test_unloading_it_takes_its_bell_out_of_the_top_bar(ctx) -> None:
+    import shiboken6
+    from PySide6.QtCore import QCoreApplication, QEvent
+
+    notifications = build(ctx)
+    bell = notifications.bell
+
+    notifications.close()
+    assert not notifications.first_look.isActive()
+    assert not notifications.timer.isActive()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+
+    assert not shiboken6.isValid(bell)

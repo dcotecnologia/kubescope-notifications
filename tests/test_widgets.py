@@ -1,4 +1,7 @@
-from PySide6.QtCore import QPoint
+import tempfile
+from pathlib import Path
+
+from PySide6.QtCore import QEvent, QPoint
 from PySide6.QtWidgets import QLabel, QWidget
 
 from kubescope.notifications.bell import Bell, bell_icon
@@ -7,6 +10,7 @@ from kubescope.notifications.panel import (
     MIN_WIDTH,
     SHOWN,
     WIDTH,
+    Card,
     NotificationPanel,
     ago,
     style,
@@ -227,3 +231,91 @@ def test_the_width_stays_within_what_is_usable_and_what_the_window_allows() -> N
     panel.open_panel()
     assert panel.width() == 340
     assert panel.width() < MAX_WIDTH
+
+
+def test_a_read_card_is_crossed_out_and_an_unread_one_is_not(make_event) -> None:
+    panel = make_panel()
+    one = notification_of("prod", make_event("a", last_seen=100.0))
+    two = notification_of("prod", make_event("b", last_seen=100.0))
+    panel.is_unread = lambda item: item.name == "api-a"
+
+    panel.show_items([one, two], now=160.0)
+
+    cards = panel.list.findChildren(Card)
+    by_name = {card.item.name: card for card in cards}
+    assert by_name["api-a"].unread and not by_name["api-b"].unread
+    assert by_name["api-a"].property("read") == "false"
+    assert by_name["api-b"].property("read") == "true"
+
+    def crossed(card: Card) -> list[bool]:
+        return [
+            label.font().strikeOut()
+            for label in card.findChildren(QLabel)
+            if label.objectName() in ("notificationReason", "notificationMessage")
+        ]
+
+    assert crossed(by_name["api-a"]) == [False, False]
+    assert crossed(by_name["api-b"]) == [True, True]
+
+
+def test_a_card_without_a_context_is_clicked_to_be_read(make_event) -> None:
+    from kubescope.notifications.store import NotificationStore
+
+    panel = make_panel()
+    heard: list[str] = []
+    panel.on_open = lambda item: heard.append(item.reason)
+    store = NotificationStore(Path(tempfile.mkdtemp()) / "n.json")
+    store.add_notice("error", "Boom", "it broke", "e", False, 100.0)
+
+    panel.show_items(store.items(), now=160.0)
+    (card,) = panel.list.findChildren(Card)
+    assert card.toolTip() == "Mark as read"
+
+    card.mouseReleaseEvent(_release(card))
+    assert heard == ["Boom"]
+
+
+def _release(card):
+    from PySide6.QtCore import QEvent, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+
+    point = QPointF(5, 5)
+    return QMouseEvent(
+        QEvent.Type.MouseButtonRelease,
+        point,
+        point,
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+
+
+def test_the_place_in_the_list_is_kept_when_it_is_drawn_again(make_event) -> None:
+    from PySide6.QtWidgets import QApplication
+
+    host = QWidget()
+    panel = make_panel(host)
+    host.resize(900, 300)
+    host.show()
+    items = [
+        notification_of("p", make_event(str(n), last_seen=float(n))) for n in range(30)
+    ]
+    panel.show_items(items, now=1e6)
+    panel.open_panel()
+    panel.animation.setCurrentTime(panel.animation.duration())
+    QApplication.processEvents()
+    bar = panel.scroller.verticalScrollBar()
+    bar.setValue(bar.maximum() // 2)
+    place = bar.value()
+    assert place > 0
+
+    panel.show_items(items, now=1e6 + 5)
+    for _ in range(3):
+        QApplication.processEvents()
+
+    assert bar.value() == place
+    panel._place = 10**6  # a place the list never grows back to
+    panel._restore_place(0, 100)
+    assert panel._place == 10**6  # kept until the moment is over
+    panel._forget_place()
+    assert panel._place is None

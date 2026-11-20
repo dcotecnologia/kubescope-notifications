@@ -12,6 +12,7 @@ from PySide6.QtCore import (
     QPointF,
     QPropertyAnimation,
     Qt,
+    QTimer,
     Signal,
 )
 from PySide6.QtGui import QKeySequence, QMouseEvent, QShortcut
@@ -77,6 +78,13 @@ QLabel#notificationReason {{
     color: {themed("#20232a", True)}; font-weight: 700;
 }}
 QLabel#notificationMessage {{ color: {themed("#20232a", True)}; }}
+QFrame#notificationCard[read="false"] {{
+    background: {themed("#eee9f7", False)};
+    border-color: {themed("#b9b3dc", False)};
+}}
+QFrame#notificationCard[read="true"] QLabel {{
+    color: {themed("#6b7380", True)};
+}}
 QLabel#notificationMeta {{ color: {themed("#6b7380", True)}; font-size: 10px; }}
 """
 
@@ -118,18 +126,23 @@ class Card(QFrame):
         item: Notification,
         now: float,
         opened: Callable[[Notification], None] = lambda _item: None,
+        unread: bool = True,
     ) -> None:
         super().__init__()
         self.item = item
+        self.unread = unread
         self._opened = opened
         self.setObjectName("notificationCard")
-        if item.context:  # one of a cluster: a click goes to its context
-            self.setCursor(Qt.CursorShape.PointingHandCursor)
-            self.setToolTip(
-                QCoreApplication.translate(
-                    "NotificationPanel", "Open the context {context}"
-                ).format(context=item.context)
-            )
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setProperty("read", "false" if unread else "true")
+        # a click reads it, and goes to the context when it is about one
+        self.setToolTip(
+            QCoreApplication.translate(
+                "NotificationPanel", "Open the context {context}"
+            ).format(context=item.context)
+            if item.context
+            else QCoreApplication.translate("NotificationPanel", "Mark as read")
+        )
         self.setProperty("level", item.level)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 9, 12, 9)
@@ -174,12 +187,16 @@ class Card(QFrame):
         layout.addWidget(when)
         for label in self.findChildren(QLabel):  # the click is the card's
             label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        if not unread:  # read: crossed out
+            for label in (reason, message):
+                font = label.font()
+                font.setStrikeOut(True)
+                font.setBold(False)
+                label.setFont(font)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
-        if (
-            self.item.context
-            and event.button() == Qt.MouseButton.LeftButton
-            and self.rect().contains(event.position().toPoint())
+        if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(
+            event.position().toPoint()
         ):
             self._opened(self.item)
         super().mouseReleaseEvent(event)
@@ -209,6 +226,7 @@ class NotificationPanel(QFrame):
         self.on_mark_read: Callable[[], None] = lambda: None
         self.on_resized: Callable[[int], None] = lambda width: None
         self.on_open: Callable[[Notification], None] = lambda item: None
+        self.is_unread: Callable[[Notification], bool] = lambda item: True
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(14, 14, 14, 14)
@@ -241,6 +259,7 @@ class NotificationPanel(QFrame):
         self.scroller.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
+        self._place: int | None = None  # where the list was before it was drawn
         self.list = QWidget()
         self.list.setObjectName("notificationList")
         self.rows = QVBoxLayout(self.list)
@@ -248,6 +267,7 @@ class NotificationPanel(QFrame):
         self.rows.setSpacing(8)
         self.scroller.setWidget(self.list)
         layout.addWidget(self.scroller, 1)
+        self.scroller.verticalScrollBar().rangeChanged.connect(self._restore_place)
 
         self.animation = QPropertyAnimation(self, b"pos", self)
         self.animation.setDuration(SLIDE_MS)
@@ -269,7 +289,10 @@ class NotificationPanel(QFrame):
         self.setStyleSheet(style(self._themed))
 
     def show_items(self, items: list[Notification], now: float) -> None:
-        """Draw the notifications, the newest first."""
+        """Draw the notifications, the newest first, with the place of the list
+        kept."""
+        bar = self.scroller.verticalScrollBar()
+        place = bar.value()
         while (child := self.rows.takeAt(0)) is not None:
             if (widget := child.widget()) is not None:
                 widget.deleteLater()
@@ -284,8 +307,12 @@ class NotificationPanel(QFrame):
             empty.setWordWrap(True)
             self.rows.addWidget(empty)
         for item in items[:SHOWN]:
-            self.rows.addWidget(Card(item, now, lambda one: self.on_open(one)))
+            self.rows.addWidget(
+                Card(item, now, lambda one: self.on_open(one), self.is_unread(item))
+            )
         self.rows.addStretch(1)
+        self._place = place if place else None  # given back once the list is long
+        QTimer.singleShot(300, self.scroller, self._forget_place)
         self.mark_read.setEnabled(bool(items))
         self.clear_all.setEnabled(bool(items))
 
@@ -308,6 +335,15 @@ class NotificationPanel(QFrame):
     def _place_grip(self) -> None:
         self.grip.setGeometry(0, 0, GRIP, self.height())
         self.grip.raise_()
+
+    def _restore_place(self, _minimum: int, maximum: int) -> None:
+        """The list grew back to where the person was: put them there."""
+        if self._place is not None and maximum >= self._place:
+            self.scroller.verticalScrollBar().setValue(self._place)
+            self._place = None
+
+    def _forget_place(self) -> None:
+        self._place = None
 
     def _geometry(self) -> tuple[QPoint, QPoint]:
         top = self._top()

@@ -8,6 +8,7 @@
             "Event": "Olay",
             "Info": "Bilgi",
             "Mark all as read": "Tümünü okundu olarak işaretle",
+            "Mark as read": "Okundu olarak işaretle",
             "Nothing to report. Warnings and errors will show here.": "Bildirilecek bir şey yok. Uyarılar ve hatalar burada görünecek.",
             "Notifications": "Bildirimler",
             "Open the context {context}": "{context} bağlamını aç",

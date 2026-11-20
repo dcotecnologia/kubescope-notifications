@@ -8,6 +8,7 @@
             "Event": "イベント",
             "Info": "情報",
             "Mark all as read": "すべて既読にする",
+            "Mark as read": "既読にする",
             "Nothing to report. Warnings and errors will show here.": "報告するものはありません。警告とエラーはここに表示されます。",
             "Notifications": "通知",
             "Open the context {context}": "コンテキスト {context} を開く",

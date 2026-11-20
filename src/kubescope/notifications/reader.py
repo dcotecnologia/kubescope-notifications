@@ -11,7 +11,7 @@ from typing import Protocol
 
 from kubescope.sdk.models import ClusterEvent
 
-WORKERS = 4  # contexts read at the same time
+WORKERS = 2  # contexts read at the same time; each may start a sign-in program
 LONGEST_PAUSE = 30  # rounds a failing context is left alone, at most
 
 

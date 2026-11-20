@@ -8,6 +8,7 @@
             "Event": "เหตุการณ์",
             "Info": "ข้อมูล",
             "Mark all as read": "ทำเครื่องหมายว่าอ่านทั้งหมดแล้ว",
+            "Mark as read": "ทำเครื่องหมายว่าอ่านแล้ว",
             "Nothing to report. Warnings and errors will show here.": "ไม่มีอะไรต้องรายงาน คำเตือนและข้อผิดพลาดจะแสดงที่นี่",
             "Notifications": "การแจ้งเตือน",
             "Open the context {context}": "เปิดคอนเท็กซ์ {context}",

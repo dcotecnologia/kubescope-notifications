@@ -9,6 +9,7 @@ can name objects of the cluster: the file is readable only by the person.
 
 import json
 import os
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
@@ -58,6 +59,7 @@ class Notification:
     first_seen: float
     last_seen: float
     source: str = CLUSTER
+    read_at: float = 0.0  # when the person read this one, by clicking it
 
 
 def level_of(event: ClusterEvent) -> str:
@@ -160,16 +162,23 @@ class NotificationStore:
         repeat: bool,
         moment: float,
         context: str = "",
+        window: float = 0.0,
     ) -> bool:
         """Add a notice of the app itself: an error, a warning or an update.
 
         The same `key` again is the same notice, which counts once more when
         `repeat` is set and is left alone otherwise; `context` names the one
-        it is about, when there is one. True when something changed.
+        it is about, when there is one. Inside `window` seconds of the last
+        time, a repeat only counts: it is not new and does not become unread
+        again. True when it is new, or news again.
         """
         identity = f"{APP}\n{key}"
         before = self._items.get(identity)
         if before is not None and not repeat:
+            return False
+        if before is not None and moment - before.last_seen < window:
+            self._items[identity] = replace(before, count=before.count + 1)
+            self.save()
             return False
         self._items[identity] = Notification(
             key=identity,
@@ -188,6 +197,19 @@ class NotificationStore:
         self._trim()
         self.save()
         return True
+
+    def discard_where(self, test: Callable[[Notification], bool]) -> int:
+        """Take away the notices of the app that the test says yes to."""
+        gone = [
+            key
+            for key, item in self._items.items()
+            if item.source == APP and test(item)
+        ]
+        for key in gone:
+            del self._items[key]
+        if gone:
+            self.save()
+        return len(gone)
 
     def find(self, key: str) -> Notification | None:
         """The notice of the app added with that key."""
@@ -235,10 +257,19 @@ class NotificationStore:
         """Every notification, the newest first."""
         return sorted(self._items.values(), key=lambda one: one.last_seen, reverse=True)
 
+    def is_unread(self, item: Notification) -> bool:
+        """Whether it happened, or happened again, after it was read."""
+        return item.last_seen > max(self.read_until, item.read_at)
+
+    def mark_item_read(self, key: str, moment: float) -> None:
+        """The person read one notification."""
+        item = self._items.get(key)
+        if item is not None:
+            self._items[key] = replace(item, read_at=moment)
+            self.save()
+
     def unread(self) -> int:
-        return sum(
-            1 for item in self._items.values() if item.last_seen > self.read_until
-        )
+        return sum(1 for item in self._items.values() if self.is_unread(item))
 
     def mark_read(self, moment: float) -> None:
         """The person looked at everything up to `moment`."""
