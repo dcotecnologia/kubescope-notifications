@@ -45,7 +45,7 @@ def style(themed: Callable[[str, bool], str]) -> str:
     return f"""
 QFrame#notificationPanel {{
     background: {themed("#ffffff", False)};
-    border-left: 1px solid {themed("#d9dce4", False)};
+    border-left: 1px solid {themed("#e1e3e9", False)};
 }}
 QLabel#notificationTitle {{
     color: {themed("#17191e", True)}; font-size: 15px; font-weight: 700;
@@ -55,18 +55,22 @@ QScrollArea#notificationScroll, QWidget#notificationList {{
     background: transparent; border: 0;
 }}
 QFrame#notificationCard {{
-    background: {themed("#f4f5f8", False)};
-    border: 1px solid {themed("#e4e5eb", False)}; border-radius: 8px;
+    background: {themed("#f3f4f7", False)};
+    border: 1px solid {themed("#e1e3e9", False)}; border-radius: 8px;
 }}
-QFrame#notificationCard[level="error"] {{ border-left: 3px solid #e5484d; }}
-QFrame#notificationCard[level="warning"] {{ border-left: 3px solid #f5a524; }}
+QFrame#notificationCard[level="error"] {{
+    border-left: 3px solid {themed("#a33d45", False)};
+}}
+QFrame#notificationCard[level="warning"] {{
+    border-left: 3px solid {themed("#985415", False)};
+}}
 QLabel#notificationReason {{
     color: {themed("#20232a", True)}; font-weight: 700;
 }}
 QLabel#notificationMessage {{ color: {themed("#20232a", True)}; }}
 QLabel#notificationMeta {{ color: {themed("#6b7380", True)}; font-size: 10px; }}
 QPushButton#notificationAction {{
-    background: transparent; border: 0; color: {themed("#4a3fb0", True)};
+    background: transparent; border: 0; color: {themed("#3220a0", True)};
     padding: 4px 6px;
 }}
 QPushButton#notificationAction:hover {{ text-decoration: underline; }}
