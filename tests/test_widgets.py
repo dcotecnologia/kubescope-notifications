@@ -136,3 +136,18 @@ def test_the_buttons_of_the_header_call_what_they_were_given() -> None:
     panel.restyle()
 
     assert calls == ["read", "clear"]
+
+
+def test_esc_closes_it_only_while_it_is_open() -> None:
+    host = QWidget()
+    panel = make_panel(host)
+    closed: list[bool] = []
+    panel.on_closed = lambda: closed.append(True)
+    assert not panel._escape.isEnabled()  # closed: the key is the window's
+
+    panel.open_panel()
+    assert panel._escape.isEnabled()
+    panel._escape.activated.emit()
+
+    assert closed == [True] and not panel.opened
+    assert not panel._escape.isEnabled()

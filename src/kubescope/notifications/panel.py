@@ -12,6 +12,7 @@ from PySide6.QtCore import (
     QPropertyAnimation,
     Qt,
 )
+from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -186,6 +187,12 @@ class NotificationPanel(QFrame):
         self.animation.setDuration(SLIDE_MS)
         self.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
         self.animation.finished.connect(self._slid)
+        # Esc closes it, but only while it is open, so the key stays free for
+        # the rest of the window the rest of the time
+        self._escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), host)
+        self._escape.setContext(Qt.ShortcutContext.WindowShortcut)
+        self._escape.setEnabled(False)
+        self._escape.activated.connect(self.close_panel)
         host.installEventFilter(self)
         self.restyle()
 
@@ -222,6 +229,7 @@ class NotificationPanel(QFrame):
     def open_panel(self) -> None:
         shown, hidden = self._geometry()
         self.opened = True
+        self._escape.setEnabled(True)
         self.move(hidden)
         self.show()
         self.raise_()
@@ -235,6 +243,7 @@ class NotificationPanel(QFrame):
             return
         shown, hidden = self._geometry()
         self.opened = False
+        self._escape.setEnabled(False)
         self.animation.stop()
         self.animation.setStartValue(self.pos())
         self.animation.setEndValue(hidden)
