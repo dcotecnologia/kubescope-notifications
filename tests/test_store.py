@@ -382,3 +382,30 @@ def test_only_the_newest_cleared_ones_are_remembered(
     store.clear()
 
     assert sorted(store._dismissed) == ["app\nk2", "app\nk3", "app\nk4"]
+
+
+def test_a_failed_sign_in_listed_by_an_older_version_is_dropped_on_load(
+    tmp_path,
+) -> None:
+    path = tmp_path / "n.json"
+    store = NotificationStore(path)
+    store.add_notice(
+        "warning",
+        "Could not read a",
+        "Token has expired",
+        "unreadable:a",
+        False,
+        1.0,
+        "a",
+    )
+    store.add_notice(
+        "warning",
+        "Could not read b",
+        "dial tcp: i/o timeout",
+        "unreadable:b",
+        False,
+        2.0,
+        "b",
+    )
+
+    assert [item.context for item in NotificationStore(path).items()] == ["b"]

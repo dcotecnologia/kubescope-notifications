@@ -15,6 +15,8 @@ from pathlib import Path
 
 from kubescope.sdk.models import ClusterEvent
 
+from kubescope.notifications.auth import is_auth_error
+
 LIMIT = 500  # the notifications kept; the oldest go first
 DISMISSED_LIMIT = 2000  # alerts remembered as cleared; the oldest are forgotten
 ERROR = "error"
@@ -140,6 +142,10 @@ class NotificationStore:
                             item.key,
                         ),
                     )
+                if item.key.startswith(f"{APP}\nunreadable:") and is_auth_error(
+                    item.message
+                ):
+                    continue  # a sign-in an older version listed: the banner says it
                 before = self._items.get(item.key)
                 if before is None or item.last_seen >= before.last_seen:
                     self._items[item.key] = item

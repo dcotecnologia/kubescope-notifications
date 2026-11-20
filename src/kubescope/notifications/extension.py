@@ -14,6 +14,7 @@ from kubescope.sdk import (
 )
 from PySide6.QtCore import QCoreApplication, QObject, QPoint, QTimer
 
+from kubescope.notifications.auth import is_auth_error
 from kubescope.notifications.bell import Bell
 from kubescope.notifications.panel import NotificationPanel
 from kubescope.notifications.reader import Backoff, read_all
@@ -128,6 +129,9 @@ class Notifications(QObject):
             key = f"unreadable:{context}"
             if isinstance(events, str):
                 self.backoff.failed(context)
+                if is_auth_error(events):  # not signed in: the banner says it
+                    self.store.discard(key)
+                    continue
                 added = self.store.add_notice(
                     "warning",
                     QCoreApplication.translate(

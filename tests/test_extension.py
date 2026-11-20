@@ -456,7 +456,7 @@ def test_a_context_that_cannot_be_read_is_listed_with_why_and_goes_when_it_can(
 ) -> None:
     ctx.cluster.contexts = ["prod", "dead"]
     ctx.cluster.events = []
-    ctx.cluster.failures["dead"] = RuntimeError("exec: failed\ntoken has expired")
+    ctx.cluster.failures["dead"] = RuntimeError("dial tcp: i/o timeout\ncluster away")
     notifications = build(ctx)
 
     notifications.poll()
@@ -465,9 +465,10 @@ def test_a_context_that_cannot_be_read_is_listed_with_why_and_goes_when_it_can(
 
     assert one.context == "dead" and one.level == "warning"
     assert one.reason == "Could not read dead"
-    assert one.message == "exec: failed"  # the first line of what it said
+    assert one.message == "dial tcp: i/o timeout"  # the first line of what it said
     ((title, message, click),) = ctx.ui.system  # told once, when it first fails
-    assert title == "Could not read dead" and message == "dead: exec: failed"
+    assert title == "Could not read dead"
+    assert message == "dead: dial tcp: i/o timeout"
     assert notifications.bell.unread == 1
     click()
     assert ctx.invoked[-1][1]["context"] == "dead"
@@ -578,7 +579,7 @@ def test_an_error_of_a_context_that_cannot_be_read_is_folded_into_its_notice(
     ctx,
 ) -> None:
     ctx.cluster.contexts = ["dead"]
-    ctx.cluster.failures["dead"] = RuntimeError("token expired")
+    ctx.cluster.failures["dead"] = RuntimeError("connection refused")
     notifications = build(ctx)
     notifications.notice("error", "Login failed", "x", "error:dead:a", True, "dead")
     notifications.notice("error", "Other", "y", "error:other:b", True, "other")
@@ -628,7 +629,7 @@ def test_clearing_is_not_undone_by_the_next_look_at_the_clusters(
 ) -> None:
     ctx.cluster.contexts = ["prod", "dead"]
     ctx.cluster.events = [make_event("a", name="api", last_seen=2000.0)]
-    ctx.cluster.failures["dead"] = RuntimeError("token expired")
+    ctx.cluster.failures["dead"] = RuntimeError("connection refused")
     notifications = build(ctx)
     notifications.poll()
     assert len(notifications.store.items()) == 2  # an event and a dead context
@@ -641,3 +642,38 @@ def test_clearing_is_not_undone_by_the_next_look_at_the_clusters(
     ctx.cluster.events = [make_event("b", name="api", last_seen=2500.0)]
     notifications.poll()
     assert [item.name for item in notifications.store.items()] == ["api"]
+
+
+def test_a_failed_sign_in_is_not_a_notification_the_banner_says_it(
+    ctx, make_event
+) -> None:
+    ctx.cluster.contexts = ["prod", "dead", "gone"]
+    ctx.cluster.events = []
+    ctx.cluster.failures["dead"] = RuntimeError(
+        "exec: process returned 255. aws: Token has expired and refresh failed"
+    )
+    ctx.cluster.failures["gone"] = RuntimeError("dial tcp: i/o timeout")
+    notifications = build(ctx)
+
+    notifications.poll()
+
+    assert [item.context for item in notifications.store.items()] == ["gone"]
+    assert [title for title, _message, _click in ctx.ui.system] == [
+        "Could not read gone"
+    ]
+
+
+def test_a_context_listed_as_unreadable_that_now_fails_to_sign_in_is_taken_out(
+    ctx, make_event
+) -> None:
+    ctx.cluster.contexts = ["dead"]
+    ctx.cluster.failures["dead"] = RuntimeError("dial tcp: i/o timeout")
+    notifications = build(ctx)
+    notifications.poll()
+    assert len(notifications.store.items()) == 1
+
+    ctx.cluster.failures["dead"] = RuntimeError("Error loading SSO token: expired")
+    for _ in range(3):  # after its pause
+        notifications.poll()
+
+    assert notifications.store.items() == []

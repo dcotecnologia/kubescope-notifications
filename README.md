@@ -34,9 +34,9 @@ and nothing else of the app. Install it in **Settings → Extensions**.
   event again for the same pod and reason, or an error of the app comes back, it keeps the count and the time of the last
   time instead of a new line; and the operating system is told about the same alert once, not again for 30 minutes.
 - **What the app itself tells.** The errors KubeScope shows in its banner, the warnings and errors of its message boxes and the notice of a **new version** of the app are listed too, with the same bell (an update is told once per version; an error that repeats counts instead of piling up).
-- **Contexts that cannot be read are listed.** A context that is not signed in (an expired SSO token, for example) gets
-  one notification saying why, which goes away when it can be read again; clicking it opens that context, where the
-  app's **Sign in** button is.
+- **Contexts that cannot be read are listed, except for a sign-in.** A context that cannot be read (the cluster is away, a
+  timeout) gets one notification saying why, which goes away when it can be read again; clicking it opens that context.
+  A failed sign-in (an expired SSO token, for example) is not listed: KubeScope already says it in its banner.
 - **Click to go there.** A card names its context, and clicking it (or the notice of the system, when it is about one
   thing) switches KubeScope to that context and closes the panel; an error or a warning of the app goes back to the context that was in use when it happened, and only the notice of a new
   version has none.
