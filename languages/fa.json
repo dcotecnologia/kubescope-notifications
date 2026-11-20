@@ -24,10 +24,13 @@
             "2 minutes": "۲ دقیقه",
             "30 seconds": "۳۰ ثانیه",
             "5 minutes": "۵ دقیقه",
-            "How often the events of the cluster are read.": "هر چند وقت رویدادهای خوشه خوانده می‌شوند.",
+            "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "هر زمینهٔ kubeconfig شما در پس‌زمینه و دو به دو خوانده می‌شود. زمینه‌ای که وارد نشده هر بار مدت بیشتری کنار گذاشته می‌شود.",
             "Look for new events every": "جستجوی رویدادهای جدید هر",
+            "Reading": "خواندن",
             "Shows a notice of the system, which opens the app when clicked.": "یک اعلان سیستمی نشان می‌دهد که با کلیک برنامه را باز می‌کند.",
+            "System notices": "اعلان‌های سیستم",
             "Tell the operating system when something new happens": "وقتی اتفاق تازه‌ای می‌افتد به سیستم‌عامل خبر بده",
+            "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "هشدارها و خطاهای همهٔ زمینه‌های kubeconfig شما و آنچه خود KubeScope گزارش می‌دهد اینجا نگه داشته می‌شود. برای خواندن آن‌ها روی زنگ نوار بالا کلیک کنید.",
             "{seconds} seconds": "{seconds} ثانیه"
         },
         "NotificationsExtension": {

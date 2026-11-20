@@ -24,10 +24,13 @@
             "2 minutes": "2 phút",
             "30 seconds": "30 giây",
             "5 minutes": "5 phút",
-            "How often the events of the cluster are read.": "Tần suất đọc các sự kiện của cụm.",
+            "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "Mọi ngữ cảnh trong kubeconfig của bạn được đọc ở nền, hai cái một lần. Ngữ cảnh chưa đăng nhập bị bỏ qua lâu hơn sau mỗi lần.",
             "Look for new events every": "Tìm sự kiện mới mỗi",
+            "Reading": "Đọc",
             "Shows a notice of the system, which opens the app when clicked.": "Hiện thông báo của hệ thống, nhấp vào sẽ mở ứng dụng.",
+            "System notices": "Thông báo của hệ thống",
             "Tell the operating system when something new happens": "Báo cho hệ điều hành khi có điều gì mới",
+            "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "Cảnh báo và lỗi của mọi ngữ cảnh trong kubeconfig của bạn, cùng những gì chính KubeScope báo cáo, được lưu ở đây. Nhấp vào chuông ở thanh trên để đọc.",
             "{seconds} seconds": "{seconds} giây"
         },
         "NotificationsExtension": {

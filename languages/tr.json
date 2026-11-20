@@ -24,10 +24,13 @@
             "2 minutes": "2 dakika",
             "30 seconds": "30 saniye",
             "5 minutes": "5 dakika",
-            "How often the events of the cluster are read.": "Kümenin olaylarının ne sıklıkla okunacağı.",
+            "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "kubeconfig dosyanızdaki her bağlam arka planda ikişer ikişer okunur. Oturum açılmamış olan her seferinde daha uzun süre atlanır.",
             "Look for new events every": "Yeni olayları şu aralıkla ara:",
+            "Reading": "Okuma",
             "Shows a notice of the system, which opens the app when clicked.": "Tıklandığında uygulamayı açan bir sistem bildirimi gösterir.",
+            "System notices": "Sistem bildirimleri",
             "Tell the operating system when something new happens": "Yeni bir şey olduğunda işletim sistemine bildir",
+            "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "kubeconfig dosyanızdaki tüm bağlamların uyarıları ve hataları ile KubeScope'un kendi bildirdikleri burada tutulur. Okumak için üst çubuktaki zile tıklayın.",
             "{seconds} seconds": "{seconds} saniye"
         },
         "NotificationsExtension": {

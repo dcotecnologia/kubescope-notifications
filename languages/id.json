@@ -24,10 +24,13 @@
             "2 minutes": "2 menit",
             "30 seconds": "30 detik",
             "5 minutes": "5 menit",
-            "How often the events of the cluster are read.": "Seberapa sering peristiwa klaster dibaca.",
+            "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "Setiap konteks kubeconfig Anda dibaca di latar belakang, dua sekaligus. Yang belum masuk dilewati lebih lama setiap kali.",
             "Look for new events every": "Cari peristiwa baru setiap",
+            "Reading": "Pembacaan",
             "Shows a notice of the system, which opens the app when clicked.": "Menampilkan pemberitahuan sistem yang membuka aplikasi saat diklik.",
+            "System notices": "Pemberitahuan sistem",
             "Tell the operating system when something new happens": "Beri tahu sistem operasi saat ada hal baru",
+            "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "Peringatan dan kesalahan dari semua konteks kubeconfig Anda, serta apa yang dilaporkan KubeScope sendiri, disimpan di sini. Klik lonceng di bilah atas untuk membacanya.",
             "{seconds} seconds": "{seconds} detik"
         },
         "NotificationsExtension": {

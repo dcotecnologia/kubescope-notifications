@@ -24,10 +24,13 @@
             "2 minutes": "2 минуты",
             "30 seconds": "30 секунд",
             "5 minutes": "5 минут",
-            "How often the events of the cluster are read.": "Как часто читаются события кластера.",
+            "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "Каждый контекст вашего kubeconfig читается в фоне, по два за раз. Контекст без входа пропускается всё дольше.",
             "Look for new events every": "Искать новые события каждые",
+            "Reading": "Чтение",
             "Shows a notice of the system, which opens the app when clicked.": "Показывает системное уведомление, которое при нажатии открывает приложение.",
+            "System notices": "Системные уведомления",
             "Tell the operating system when something new happens": "Сообщать операционной системе, когда происходит что-то новое",
+            "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "Здесь хранятся предупреждения и ошибки всех контекстов вашего kubeconfig и то, о чём сообщает сам KubeScope. Нажмите на колокольчик в верхней панели, чтобы их прочитать.",
             "{seconds} seconds": "{seconds} с"
         },
         "NotificationsExtension": {

@@ -24,10 +24,13 @@
             "2 minutes": "2 นาที",
             "30 seconds": "30 วินาที",
             "5 minutes": "5 นาที",
-            "How often the events of the cluster are read.": "ความถี่ในการอ่านเหตุการณ์ของคลัสเตอร์",
+            "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "ทุกคอนเท็กซ์ใน kubeconfig ของคุณจะถูกอ่านเบื้องหลังทีละสองรายการ รายการที่ยังไม่ได้ลงชื่อเข้าใช้จะถูกข้ามนานขึ้นทุกครั้ง",
             "Look for new events every": "ค้นหาเหตุการณ์ใหม่ทุก",
+            "Reading": "การอ่าน",
             "Shows a notice of the system, which opens the app when clicked.": "แสดงการแจ้งเตือนของระบบที่เปิดแอปเมื่อคลิก",
+            "System notices": "การแจ้งเตือนของระบบ",
             "Tell the operating system when something new happens": "แจ้งระบบปฏิบัติการเมื่อมีเรื่องใหม่",
+            "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "คำเตือนและข้อผิดพลาดของทุกคอนเท็กซ์ใน kubeconfig ของคุณ และสิ่งที่ KubeScope รายงานเอง จะถูกเก็บไว้ที่นี่ คลิกกระดิ่งที่แถบด้านบนเพื่ออ่าน",
             "{seconds} seconds": "{seconds} วินาที"
         },
         "NotificationsExtension": {
