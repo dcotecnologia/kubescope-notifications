@@ -69,11 +69,6 @@ QLabel#notificationReason {{
 }}
 QLabel#notificationMessage {{ color: {themed("#20232a", True)}; }}
 QLabel#notificationMeta {{ color: {themed("#6b7380", True)}; font-size: 10px; }}
-QPushButton#notificationAction {{
-    background: transparent; border: 0; color: {themed("#3220a0", True)};
-    padding: 4px 6px;
-}}
-QPushButton#notificationAction:hover {{ text-decoration: underline; }}
 """
 
 
@@ -163,10 +158,11 @@ class NotificationPanel(QFrame):
             QCoreApplication.translate("NotificationPanel", "Clear")
         )
         self.close_button = QPushButton("✕")
-        for button in (self.mark_read, self.clear_all, self.close_button):
-            button.setObjectName("notificationAction")
-            button.setCursor(Qt.CursorShape.PointingHandCursor)
+        for button in (self.mark_read, self.clear_all):
+            button.setProperty("variant", "secondary")  # the buttons of the app
             header.addWidget(button)
+        self.close_button.setProperty("variant", "link")
+        header.addWidget(self.close_button)
         self.mark_read.clicked.connect(lambda: self.on_mark_read())
         self.clear_all.clicked.connect(lambda: self.on_clear())
         self.close_button.clicked.connect(self.close_panel)
