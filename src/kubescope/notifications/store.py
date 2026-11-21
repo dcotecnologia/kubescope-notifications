@@ -1,10 +1,11 @@
 """The notifications kept between runs.
 
-No Qt. An event of the cluster becomes a notification, an `error` when its
-reason says that something failed and a `warning` otherwise. They are kept by
-the context and the uid of the event, so one that repeats is one notification
-whose count and time move on. What is kept is the text of the events, which
-can name objects of the cluster: the file is readable only by the person.
+No Qt. An event of the cluster becomes a notification, an `error` when
+its reason says that something failed and a `warning` otherwise. They
+are kept by the context and the uid of the event, so one that repeats is
+one notification whose count and time move on. What is kept is the text
+of the events, which can name objects of the cluster: the file is
+readable only by the person.
 """
 
 import json
@@ -181,11 +182,12 @@ class NotificationStore:
     ) -> bool:
         """Add a notice of the app itself: an error, a warning or an update.
 
-        The same `key` again is the same notice, which counts once more when
-        `repeat` is set and is left alone otherwise; `context` names the one
-        it is about, when there is one. Inside `window` seconds of the last
-        time, a repeat only counts: it is not new and does not become unread
-        again. True when it is new, or news again.
+        The same `key` again is the same notice, which counts once more
+        when `repeat` is set and is left alone otherwise; `context`
+        names the one it is about, when there is one. Inside `window`
+        seconds of the last time, a repeat only counts: it is not new
+        and does not become unread again. True when it is new, or news
+        again.
         """
         identity = f"{APP}\n{key}"
         cleared = self._dismissed.get(identity)
@@ -308,8 +310,11 @@ class NotificationStore:
         self.save()
 
     def clear(self) -> None:
-        """Forget every notification. What was cleared does not come back with
-        the next look at the cluster: only when it happens again."""
+        """Forget every notification.
+
+        What was cleared does not come back with
+        the next look at the cluster: only when it happens again.
+        """
         for key, item in self._items.items():
             self._dismissed[key] = item.last_seen
         newest = sorted(self._dismissed.items(), key=lambda pair: pair[1])

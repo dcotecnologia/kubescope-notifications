@@ -1,8 +1,9 @@
 """Telling a failure to sign in from the other failures of a context.
 
 KubeScope already says "you are not signed in" in its banner, so the
-notifications leave those out. The words are the ones of the app (`is_auth_error`
-of `kubescope.utils.errors`); a test keeps the two together.
+notifications leave those out. The words are the ones of the app
+(`is_auth_error` of `kubescope.utils.errors`); a test keeps the two
+together.
 """
 
 _AUTH_WORDS = (

@@ -1,8 +1,8 @@
 """Reading the events of every context of the kubeconfig, off the UI thread.
 
-No Qt. A context that cannot be read (it is not signed in, the cluster is
-away) is left alone for a growing number of rounds, so that a few dead contexts
-do not spend a sign-in command at every look.
+No Qt. A context that cannot be read (it is not signed in, the cluster
+is away) is left alone for a growing number of rounds, so that a few
+dead contexts do not spend a sign-in command at every look.
 """
 
 from collections.abc import Collection
@@ -56,8 +56,8 @@ class Backoff:
 def read_all(
     reader: Reader, skip: Collection[str]
 ) -> tuple[list[str], dict[str, list[ClusterEvent] | str]]:
-    """Every context of the kubeconfig, and the Warning events of each one
-    that is not skipped; what could not be read is the reason, as text."""
+    """Every context of the kubeconfig, and the Warning events of each one that
+    is not skipped; what could not be read is the reason, as text."""
     contexts = reader.list_contexts()
     due = [name for name in contexts if name not in skip]
     found: dict[str, list[ClusterEvent] | str] = {}

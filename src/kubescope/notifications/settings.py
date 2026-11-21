@@ -49,8 +49,8 @@ class NotificationSettings:
 
     @property
     def system_notifications(self) -> bool:
-        """Whether a new notification is also told by the operating system;
-        on unless the person turned it off."""
+        """Whether a new notification is also told by the operating system; on
+        unless the person turned it off."""
         return self._store.get("system_notifications", True) is not False
 
     @system_notifications.setter

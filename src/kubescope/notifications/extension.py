@@ -41,8 +41,8 @@ def first_line(reason: str) -> str:
 
 class Notifications(QObject):
     """Looks at the events of every context of the kubeconfig every few
-    seconds, keeps the Warning ones, shows them, and tells the operating
-    system about the new ones."""
+    seconds, keeps the Warning ones, shows them, and tells the operating system
+    about the new ones."""
 
     def __init__(
         self,
@@ -96,14 +96,17 @@ class Notifications(QObject):
         return self.bell.mapTo(central, QPoint(0, self.bell.height())).y() + GAP
 
     def apply_settings(self) -> None:
-        """Start (or restart) the look at the cluster at the interval chosen."""
+        """Start (or restart) the look at the cluster at the interval
+        chosen."""
         self.timer.start(self.settings.interval * 1000)
 
     def poll(self) -> None:
-        """Read the events of every context, off the UI thread. Nothing
-        happens while the last read is not over; a context that cannot be read
-        (it is not signed in) keeps what is kept and is left alone for a
-        while."""
+        """Read the events of every context, off the UI thread.
+
+        Nothing happens while the last read is not over; a context that
+        cannot be read (it is not signed in) keeps what is kept and is
+        left alone for a while.
+        """
         ui = self.ctx.ui
         if ui is None or self._busy:
             return
@@ -216,7 +219,8 @@ class Notifications(QObject):
         self.panel.close_panel()
 
     def open_panel(self) -> None:
-        """Show the panel, as the bell does; a notice of the system leads here."""
+        """Show the panel, as the bell does; a notice of the system leads
+        here."""
         if not self.panel.opened:
             self.toggle()
 
