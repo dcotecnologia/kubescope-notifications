@@ -25,12 +25,18 @@
             "30 seconds": "30 שניות",
             "5 minutes": "5 דקות",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "כל ההקשרים ב-kubeconfig שלך נקראים ברקע, שניים בכל פעם. הקשר שלא מחובר מדולג זמן ארוך יותר בכל פעם.",
+            "From": "מ־",
+            "Ignored objects": "אובייקטים מתעלמים",
             "Look for new events every": "חפש אירועים חדשים כל",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "אחד בכל שורה, בצורה סוג/שם או הקשר/סוג/שם. ‏* ו־? מייצגים טקסט כלשהו. מה שמתאים לא נשמר ולא מדווח.",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "מחוץ לשעות אלה ההתראות עדיין נשמרות בפעמון, אך המערכת לא מקבלת הודעה. סיום לפני ההתחלה עובר את חצות.",
             "Reading": "קריאה",
             "Shows a notice of the system, which opens the app when clicked.": "מציג התראה של המערכת שפותחת את היישום בלחיצה.",
             "System notices": "הודעות מערכת",
             "Tell the operating system when something new happens": "להודיע למערכת ההפעלה כשקורה משהו חדש",
+            "Tell the system only between these hours": "להודיע למערכת רק בין השעות האלה",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "אזהרות ושגיאות של כל ההקשרים ב-kubeconfig שלך, ומה ש-KubeScope עצמו מדווח, נשמרות כאן. לחץ על הפעמון בסרגל העליון כדי לקרוא אותן.",
+            "to": "עד",
             "{seconds} seconds": "{seconds} שניות"
         },
         "NotificationsExtension": {

@@ -25,12 +25,18 @@
             "30 seconds": "30 秒",
             "5 minutes": "5 分",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "kubeconfig のすべてのコンテキストをバックグラウンドで 2 つずつ読み取ります。サインインしていないものは、そのたびに長くスキップされます。",
+            "From": "開始",
+            "Ignored objects": "無視するオブジェクト",
             "Look for new events every": "新しいイベントを確認する間隔",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "1行に1つ、種類/名前 または コンテキスト/種類/名前 の形式で入力します。* と ? は任意の文字列を表します。一致したものは保存も通知もされません。",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "この時間帯の外でも通知はベルに保存されますが、システムには知らせません。終了が開始より前の場合は日をまたぎます。",
             "Reading": "読み取り",
             "Shows a notice of the system, which opens the app when clicked.": "クリックするとアプリを開くシステム通知を表示します。",
             "System notices": "システム通知",
             "Tell the operating system when something new happens": "新しいことが起きたらオペレーティングシステムに知らせる",
+            "Tell the system only between these hours": "この時間帯のみシステムに知らせる",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "kubeconfig のすべてのコンテキストの警告とエラー、および KubeScope 自身が報告する内容がここに保存されます。上部バーのベルをクリックすると読めます。",
+            "to": "終了",
             "{seconds} seconds": "{seconds} 秒"
         },
         "NotificationsExtension": {

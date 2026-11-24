@@ -25,12 +25,18 @@
             "30 seconds": "30초",
             "5 minutes": "5분",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "kubeconfig의 모든 컨텍스트를 백그라운드에서 두 개씩 읽습니다. 로그인되지 않은 컨텍스트는 매번 더 오래 건너뜁니다.",
+            "From": "시작",
+            "Ignored objects": "무시할 객체",
             "Look for new events every": "새 이벤트 확인 주기",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "한 줄에 하나씩 종류/이름 또는 컨텍스트/종류/이름 형식으로 입력합니다. *와 ?는 임의의 텍스트를 뜻합니다. 일치하는 항목은 저장하거나 알리지 않습니다.",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "이 시간대 밖에서도 알림은 벨에 저장되지만 시스템에는 알리지 않습니다. 종료가 시작보다 앞서면 자정을 넘깁니다.",
             "Reading": "읽기",
             "Shows a notice of the system, which opens the app when clicked.": "클릭하면 앱을 여는 시스템 알림을 표시합니다.",
             "System notices": "시스템 알림",
             "Tell the operating system when something new happens": "새로운 일이 생기면 운영 체제에 알리기",
+            "Tell the system only between these hours": "이 시간대에만 시스템에 알리기",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "kubeconfig의 모든 컨텍스트의 경고와 오류, 그리고 KubeScope 자체가 알리는 내용이 여기에 보관됩니다. 읽으려면 상단 막대의 종을 클릭하세요.",
+            "to": "종료",
             "{seconds} seconds": "{seconds}초"
         },
         "NotificationsExtension": {

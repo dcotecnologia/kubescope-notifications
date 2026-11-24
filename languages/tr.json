@@ -25,12 +25,18 @@
             "30 seconds": "30 saniye",
             "5 minutes": "5 dakika",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "kubeconfig dosyanızdaki her bağlam arka planda ikişer ikişer okunur. Oturum açılmamış olan her seferinde daha uzun süre atlanır.",
+            "From": "Başlangıç",
+            "Ignored objects": "Yok sayılan nesneler",
             "Look for new events every": "Yeni olayları şu aralıkla ara:",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "Her satıra bir tane, Tür/ad veya bağlam/Tür/ad biçiminde. * ve ? herhangi bir metni temsil eder. Eşleşen saklanmaz ve bildirilmez.",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "Bu saatlerin dışında bildirimler zilde saklanmaya devam eder ama sisteme haber verilmez. Başlangıçtan önce biten aralık gece yarısını geçer.",
             "Reading": "Okuma",
             "Shows a notice of the system, which opens the app when clicked.": "Tıklandığında uygulamayı açan bir sistem bildirimi gösterir.",
             "System notices": "Sistem bildirimleri",
             "Tell the operating system when something new happens": "Yeni bir şey olduğunda işletim sistemine bildir",
+            "Tell the system only between these hours": "Sisteme yalnızca bu saatler arasında haber ver",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "kubeconfig dosyanızdaki tüm bağlamların uyarıları ve hataları ile KubeScope'un kendi bildirdikleri burada tutulur. Okumak için üst çubuktaki zile tıklayın.",
+            "to": "bitiş",
             "{seconds} seconds": "{seconds} saniye"
         },
         "NotificationsExtension": {

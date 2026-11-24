@@ -25,12 +25,18 @@
             "30 seconds": "30 seconden",
             "5 minutes": "5 minuten",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "Elke context van je kubeconfig wordt op de achtergrond gelezen, twee tegelijk. Eén die niet is aangemeld wordt telkens langer overgeslagen.",
+            "From": "Van",
+            "Ignored objects": "Genegeerde objecten",
             "Look for new events every": "Zoek nieuwe gebeurtenissen elke",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "Eén per regel, als Soort/naam of context/Soort/naam. * en ? staan voor willekeurige tekst. Wat overeenkomt, wordt niet bewaard en niet gemeld.",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "Buiten deze uren blijven de meldingen bewaard in de bel, maar wordt het systeem niet gewaarschuwd. Een einde vóór het begin loopt over middernacht.",
             "Reading": "Lezen",
             "Shows a notice of the system, which opens the app when clicked.": "Toont een melding van het systeem die de app opent bij een klik.",
             "System notices": "Systeemmeldingen",
             "Tell the operating system when something new happens": "Het besturingssysteem melden wanneer er iets nieuws gebeurt",
+            "Tell the system only between these hours": "Het systeem alleen tussen deze uren waarschuwen",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "Waarschuwingen en fouten van alle contexten van je kubeconfig, en wat KubeScope zelf meldt, worden hier bewaard. Klik op de bel in de bovenste balk om ze te lezen.",
+            "to": "tot",
             "{seconds} seconds": "{seconds} seconden"
         },
         "NotificationsExtension": {

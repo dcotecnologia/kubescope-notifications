@@ -25,12 +25,18 @@
             "30 seconds": "30 giây",
             "5 minutes": "5 phút",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "Mọi ngữ cảnh trong kubeconfig của bạn được đọc ở nền, hai cái một lần. Ngữ cảnh chưa đăng nhập bị bỏ qua lâu hơn sau mỗi lần.",
+            "From": "Từ",
+            "Ignored objects": "Đối tượng bị bỏ qua",
             "Look for new events every": "Tìm sự kiện mới mỗi",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "Mỗi dòng một mục, dạng Loại/tên hoặc ngữ cảnh/Loại/tên. * và ? thay cho văn bản bất kỳ. Mục khớp sẽ không được lưu và không được báo.",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "Ngoài các giờ này, thông báo vẫn được giữ trong chuông nhưng không báo cho hệ thống. Giờ kết thúc trước giờ bắt đầu sẽ qua nửa đêm.",
             "Reading": "Đọc",
             "Shows a notice of the system, which opens the app when clicked.": "Hiện thông báo của hệ thống, nhấp vào sẽ mở ứng dụng.",
             "System notices": "Thông báo của hệ thống",
             "Tell the operating system when something new happens": "Báo cho hệ điều hành khi có điều gì mới",
+            "Tell the system only between these hours": "Chỉ báo cho hệ thống trong khoảng giờ này",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "Cảnh báo và lỗi của mọi ngữ cảnh trong kubeconfig của bạn, cùng những gì chính KubeScope báo cáo, được lưu ở đây. Nhấp vào chuông ở thanh trên để đọc.",
+            "to": "đến",
             "{seconds} seconds": "{seconds} giây"
         },
         "NotificationsExtension": {

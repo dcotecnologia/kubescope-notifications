@@ -25,12 +25,18 @@
             "30 seconds": "30 secondes",
             "5 minutes": "5 minutes",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "Chaque contexte de votre kubeconfig est lu en arrière-plan, deux à la fois. Un contexte non connecté est laissé de côté plus longtemps à chaque fois.",
+            "From": "De",
+            "Ignored objects": "Objets ignorés",
             "Look for new events every": "Chercher de nouveaux événements toutes les",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "Un par ligne, sous la forme Type/nom ou contexte/Type/nom. * et ? remplacent n'importe quel texte. Ce qui correspond n'est ni conservé ni signalé.",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "En dehors de ces heures, les notifications restent gardées dans la cloche, mais le système n'est pas prévenu. Une fin avant le début passe minuit.",
             "Reading": "Lecture",
             "Shows a notice of the system, which opens the app when clicked.": "Affiche une notification du système qui ouvre l'application au clic.",
             "System notices": "Notifications du système",
             "Tell the operating system when something new happens": "Prévenir le système d'exploitation quand il se passe quelque chose",
+            "Tell the system only between these hours": "Prévenir le système seulement entre ces heures",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "Les avertissements et les erreurs de tous les contextes de votre kubeconfig, et ce que KubeScope signale lui-même, sont gardés ici. Cliquez sur la cloche de la barre du haut pour les lire.",
+            "to": "à",
             "{seconds} seconds": "{seconds} secondes"
         },
         "NotificationsExtension": {

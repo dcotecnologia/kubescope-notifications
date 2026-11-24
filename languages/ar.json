@@ -25,12 +25,18 @@
             "30 seconds": "30 ثانية",
             "5 minutes": "5 دقائق",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "تُقرأ كل سياقات kubeconfig لديك في الخلفية، اثنين في كل مرة. ويُترك السياق غير المسجَّل دخوله مدة أطول في كل مرة.",
+            "From": "من",
+            "Ignored objects": "الكائنات المتجاهلة",
             "Look for new events every": "البحث عن أحداث جديدة كل",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "واحد في كل سطر، بالشكل النوع/الاسم أو السياق/النوع/الاسم. يمثل * و? أي نص. ما يطابق لا يُحفظ ولا يُبلَّغ عنه.",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "خارج هذه الساعات تبقى الإشعارات محفوظة في الجرس لكن لا يُبلَّغ النظام. إذا كانت النهاية قبل البداية فالفترة تمتد عبر منتصف الليل.",
             "Reading": "القراءة",
             "Shows a notice of the system, which opens the app when clicked.": "يعرض إشعارًا من النظام يفتح التطبيق عند النقر عليه.",
             "System notices": "إشعارات النظام",
             "Tell the operating system when something new happens": "إبلاغ نظام التشغيل عند حدوث شيء جديد",
+            "Tell the system only between these hours": "أبلغ النظام فقط بين هذه الساعات",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "تُحفظ هنا تحذيرات وأخطاء كل سياقات kubeconfig لديك وما يبلّغ عنه KubeScope نفسه. انقر على الجرس في الشريط العلوي لقراءتها.",
+            "to": "إلى",
             "{seconds} seconds": "{seconds} ثانية"
         },
         "NotificationsExtension": {

@@ -25,12 +25,18 @@
             "30 seconds": "30 Sekunden",
             "5 minutes": "5 Minuten",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "Jeder Kontext Ihrer kubeconfig wird im Hintergrund gelesen, zwei gleichzeitig. Ein nicht angemeldeter wird jedes Mal länger ausgelassen.",
+            "From": "Von",
+            "Ignored objects": "Ignorierte Objekte",
             "Look for new events every": "Neue Ereignisse suchen alle",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "Eines pro Zeile, als Art/Name oder Kontext/Art/Name. * und ? stehen für beliebigen Text. Was passt, wird weder gespeichert noch gemeldet.",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "Außerhalb dieser Zeiten bleiben die Benachrichtigungen in der Glocke, das System wird aber nicht informiert. Ein Ende vor dem Beginn reicht über Mitternacht.",
             "Reading": "Lesen",
             "Shows a notice of the system, which opens the app when clicked.": "Zeigt eine Systembenachrichtigung, die beim Klicken die App öffnet.",
             "System notices": "Systemmeldungen",
             "Tell the operating system when something new happens": "Das Betriebssystem benachrichtigen, wenn etwas Neues passiert",
+            "Tell the system only between these hours": "Das System nur zwischen diesen Uhrzeiten informieren",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "Warnungen und Fehler aller Kontexte Ihrer kubeconfig und was KubeScope selbst meldet, werden hier gesammelt. Klicken Sie auf die Glocke in der oberen Leiste, um sie zu lesen.",
+            "to": "bis",
             "{seconds} seconds": "{seconds} Sekunden"
         },
         "NotificationsExtension": {

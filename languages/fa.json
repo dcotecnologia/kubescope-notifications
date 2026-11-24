@@ -25,12 +25,18 @@
             "30 seconds": "۳۰ ثانیه",
             "5 minutes": "۵ دقیقه",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "هر زمینهٔ kubeconfig شما در پس‌زمینه و دو به دو خوانده می‌شود. زمینه‌ای که وارد نشده هر بار مدت بیشتری کنار گذاشته می‌شود.",
+            "From": "از",
+            "Ignored objects": "اشیای نادیده‌گرفته‌شده",
             "Look for new events every": "جستجوی رویدادهای جدید هر",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "هر مورد در یک خط، به شکل نوع/نام یا زمینه/نوع/نام. * و ? هر متنی را نشان می‌دهند. آنچه مطابقت کند نه ذخیره می‌شود و نه اعلام.",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "خارج از این ساعت‌ها اعلان‌ها همچنان در زنگ نگه داشته می‌شوند اما به سیستم اطلاع داده نمی‌شود. پایانی پیش از آغاز از نیمه‌شب می‌گذرد.",
             "Reading": "خواندن",
             "Shows a notice of the system, which opens the app when clicked.": "یک اعلان سیستمی نشان می‌دهد که با کلیک برنامه را باز می‌کند.",
             "System notices": "اعلان‌های سیستم",
             "Tell the operating system when something new happens": "وقتی اتفاق تازه‌ای می‌افتد به سیستم‌عامل خبر بده",
+            "Tell the system only between these hours": "فقط بین این ساعت‌ها به سیستم اطلاع بده",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "هشدارها و خطاهای همهٔ زمینه‌های kubeconfig شما و آنچه خود KubeScope گزارش می‌دهد اینجا نگه داشته می‌شود. برای خواندن آن‌ها روی زنگ نوار بالا کلیک کنید.",
+            "to": "تا",
             "{seconds} seconds": "{seconds} ثانیه"
         },
         "NotificationsExtension": {

@@ -25,12 +25,18 @@
             "30 seconds": "30 सेकंड",
             "5 minutes": "5 मिनट",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "आपके kubeconfig का हर संदर्भ पृष्ठभूमि में दो-दो करके पढ़ा जाता है। जो साइन इन नहीं है, उसे हर बार अधिक समय के लिए छोड़ दिया जाता है।",
+            "From": "से",
+            "Ignored objects": "अनदेखे किए गए ऑब्जेक्ट",
             "Look for new events every": "नई घटनाएँ खोजें हर",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "हर पंक्ति में एक, प्रकार/नाम या कॉन्टेक्स्ट/प्रकार/नाम के रूप में। * और ? किसी भी पाठ के लिए हैं। जो मेल खाए वह न सहेजा जाता है न बताया जाता है।",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "इन घंटों के बाहर सूचनाएँ घंटी में सहेजी रहती हैं, पर सिस्टम को नहीं बताया जाता। शुरू से पहले का अंत आधी रात पार करता है।",
             "Reading": "पढ़ना",
             "Shows a notice of the system, which opens the app when clicked.": "सिस्टम की सूचना दिखाता है, जिस पर क्लिक करने से ऐप खुलता है।",
             "System notices": "सिस्टम सूचनाएँ",
             "Tell the operating system when something new happens": "कुछ नया होने पर ऑपरेटिंग सिस्टम को बताएँ",
+            "Tell the system only between these hours": "सिस्टम को केवल इन घंटों के बीच बताएँ",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "आपके kubeconfig के सभी संदर्भों की चेतावनियाँ और त्रुटियाँ, और KubeScope जो खुद बताता है, यहाँ रखे जाते हैं। पढ़ने के लिए ऊपरी पट्टी की घंटी पर क्लिक करें।",
+            "to": "तक",
             "{seconds} seconds": "{seconds} सेकंड"
         },
         "NotificationsExtension": {

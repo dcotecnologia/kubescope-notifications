@@ -25,12 +25,18 @@
             "30 seconds": "30 秒",
             "5 minutes": "5 分鐘",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "kubeconfig 中的每個內容都在背景讀取，每次兩個。未登入的內容每次都會被略過更久。",
+            "From": "從",
+            "Ignored objects": "忽略的物件",
             "Look for new events every": "尋找新事件的間隔",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "每行一個,格式為 種類/名稱 或 內容/種類/名稱。* 和 ? 代表任意文字。符合的物件不會被儲存,也不會提醒。",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "在這些時間之外,通知仍會保存在鈴鐺中,但不會通知系統。結束早於開始表示跨過午夜。",
             "Reading": "讀取",
             "Shows a notice of the system, which opens the app when clicked.": "顯示系統通知，點擊後開啟應用程式。",
             "System notices": "系統通知",
             "Tell the operating system when something new happens": "有新狀況時通知作業系統",
+            "Tell the system only between these hours": "僅在這些時間之間通知系統",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "kubeconfig 中所有內容的警告和錯誤，以及 KubeScope 本身回報的內容都保存在這裡。點擊上方列的鈴鐺即可閱讀。",
+            "to": "到",
             "{seconds} seconds": "{seconds} 秒"
         },
         "NotificationsExtension": {

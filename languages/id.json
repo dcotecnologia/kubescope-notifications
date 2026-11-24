@@ -25,12 +25,18 @@
             "30 seconds": "30 detik",
             "5 minutes": "5 menit",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "Setiap konteks kubeconfig Anda dibaca di latar belakang, dua sekaligus. Yang belum masuk dilewati lebih lama setiap kali.",
+            "From": "Dari",
+            "Ignored objects": "Objek yang diabaikan",
             "Look for new events every": "Cari peristiwa baru setiap",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "Satu per baris, sebagai Jenis/nama atau konteks/Jenis/nama. * dan ? mewakili teks apa pun. Yang cocok tidak disimpan maupun diberitahukan.",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "Di luar jam ini notifikasi tetap tersimpan di lonceng, tetapi sistem tidak diberi tahu. Akhir sebelum awal melewati tengah malam.",
             "Reading": "Pembacaan",
             "Shows a notice of the system, which opens the app when clicked.": "Menampilkan pemberitahuan sistem yang membuka aplikasi saat diklik.",
             "System notices": "Pemberitahuan sistem",
             "Tell the operating system when something new happens": "Beri tahu sistem operasi saat ada hal baru",
+            "Tell the system only between these hours": "Beri tahu sistem hanya di antara jam ini",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "Peringatan dan kesalahan dari semua konteks kubeconfig Anda, serta apa yang dilaporkan KubeScope sendiri, disimpan di sini. Klik lonceng di bilah atas untuk membacanya.",
+            "to": "sampai",
             "{seconds} seconds": "{seconds} detik"
         },
         "NotificationsExtension": {

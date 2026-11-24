@@ -25,12 +25,18 @@
             "30 seconds": "30 secondi",
             "5 minutes": "5 minuti",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "Ogni contesto del tuo kubeconfig viene letto in background, due alla volta. Uno non connesso viene lasciato da parte più a lungo ogni volta.",
+            "From": "Dalle",
+            "Ignored objects": "Oggetti ignorati",
             "Look for new events every": "Cerca nuovi eventi ogni",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "Uno per riga, come Tipo/nome o contesto/Tipo/nome. * e ? valgono per qualsiasi testo. Ciò che corrisponde non viene salvato né segnalato.",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "Fuori da questi orari le notifiche restano salvate nella campanella, ma il sistema non viene avvisato. Una fine prima dell'inizio supera la mezzanotte.",
             "Reading": "Lettura",
             "Shows a notice of the system, which opens the app when clicked.": "Mostra un avviso del sistema che apre l'app al clic.",
             "System notices": "Avvisi del sistema",
             "Tell the operating system when something new happens": "Avvisa il sistema operativo quando succede qualcosa di nuovo",
+            "Tell the system only between these hours": "Avvisa il sistema solo tra questi orari",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "Qui restano gli avvisi e gli errori di tutti i contesti del tuo kubeconfig, e ciò che segnala KubeScope stesso. Fai clic sulla campana nella barra in alto per leggerli.",
+            "to": "alle",
             "{seconds} seconds": "{seconds} secondi"
         },
         "NotificationsExtension": {

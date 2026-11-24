@@ -25,12 +25,18 @@
             "30 seconds": "30 секунд",
             "5 minutes": "5 минут",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "Каждый контекст вашего kubeconfig читается в фоне, по два за раз. Контекст без входа пропускается всё дольше.",
+            "From": "С",
+            "Ignored objects": "Игнорируемые объекты",
             "Look for new events every": "Искать новые события каждые",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "По одному в строке, в виде Тип/имя или контекст/Тип/имя. * и ? заменяют любой текст. Совпавшее не сохраняется и не сообщается.",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "Вне этих часов уведомления по-прежнему хранятся в колокольчике, но система не уведомляется. Конец раньше начала переходит через полночь.",
             "Reading": "Чтение",
             "Shows a notice of the system, which opens the app when clicked.": "Показывает системное уведомление, которое при нажатии открывает приложение.",
             "System notices": "Системные уведомления",
             "Tell the operating system when something new happens": "Сообщать операционной системе, когда происходит что-то новое",
+            "Tell the system only between these hours": "Уведомлять систему только в эти часы",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "Здесь хранятся предупреждения и ошибки всех контекстов вашего kubeconfig и то, о чём сообщает сам KubeScope. Нажмите на колокольчик в верхней панели, чтобы их прочитать.",
+            "to": "до",
             "{seconds} seconds": "{seconds} с"
         },
         "NotificationsExtension": {

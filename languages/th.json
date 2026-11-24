@@ -25,12 +25,18 @@
             "30 seconds": "30 วินาที",
             "5 minutes": "5 นาที",
             "Every context of your kubeconfig is read in the background, two at a time. One that is not signed in is left alone for longer each time.": "ทุกคอนเท็กซ์ใน kubeconfig ของคุณจะถูกอ่านเบื้องหลังทีละสองรายการ รายการที่ยังไม่ได้ลงชื่อเข้าใช้จะถูกข้ามนานขึ้นทุกครั้ง",
+            "From": "ตั้งแต่",
+            "Ignored objects": "ออบเจกต์ที่ละเว้น",
             "Look for new events every": "ค้นหาเหตุการณ์ใหม่ทุก",
+            "One per line, as Kind/name or context/Kind/name. * and ? stand for any text. What matches is not kept nor told.": "บรรทัดละหนึ่งรายการ ในรูปแบบ ชนิด/ชื่อ หรือ คอนเท็กซ์/ชนิด/ชื่อ โดย * และ ? แทนข้อความใดก็ได้ สิ่งที่ตรงกันจะไม่ถูกเก็บและไม่ถูกแจ้ง",
+            "Outside these hours the notifications are still kept in the bell, but the system is not told. An end before the start runs over midnight.": "นอกช่วงเวลานี้ การแจ้งเตือนยังถูกเก็บไว้ในกระดิ่ง แต่จะไม่แจ้งระบบ หากเวลาสิ้นสุดอยู่ก่อนเวลาเริ่ม จะข้ามเที่ยงคืน",
             "Reading": "การอ่าน",
             "Shows a notice of the system, which opens the app when clicked.": "แสดงการแจ้งเตือนของระบบที่เปิดแอปเมื่อคลิก",
             "System notices": "การแจ้งเตือนของระบบ",
             "Tell the operating system when something new happens": "แจ้งระบบปฏิบัติการเมื่อมีเรื่องใหม่",
+            "Tell the system only between these hours": "แจ้งระบบเฉพาะในช่วงเวลานี้",
             "Warnings and errors of every context of your kubeconfig, and what KubeScope itself reports, are kept here. Click the bell in the top bar to read them.": "คำเตือนและข้อผิดพลาดของทุกคอนเท็กซ์ใน kubeconfig ของคุณ และสิ่งที่ KubeScope รายงานเอง จะถูกเก็บไว้ที่นี่ คลิกกระดิ่งที่แถบด้านบนเพื่ออ่าน",
+            "to": "ถึง",
             "{seconds} seconds": "{seconds} วินาที"
         },
         "NotificationsExtension": {
