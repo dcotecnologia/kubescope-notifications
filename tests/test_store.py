@@ -1,6 +1,7 @@
 import json
 import os
 import stat
+from typing import Any
 
 from kubescope.notifications.settings import (
     DEFAULT,
@@ -409,3 +410,37 @@ def test_a_failed_sign_in_listed_by_an_older_version_is_dropped_on_load(
     )
 
     assert [item.context for item in NotificationStore(path).items()] == ["b"]
+
+
+def test_the_window_and_the_ignore_list_of_the_settings() -> None:
+    from kubescope.notifications.settings import ignored_by
+
+    class Kept(dict[str, Any]):
+        def get(self, key: str, default: Any = None) -> Any:
+            return super().get(key, default)
+
+        def set(self, key: str, value: Any) -> None:
+            self[key] = value
+
+    kept = Kept()
+    settings = NotificationSettings(kept)
+    assert settings.in_window(3 * 60)  # off: always
+    settings.window_enabled = True
+    settings.window_start, settings.window_end = "08:00", "18:00"
+    assert settings.in_window(9 * 60) and not settings.in_window(19 * 60)
+    settings.window_start, settings.window_end = "22:00", "06:00"
+    assert settings.in_window(23 * 60) and settings.in_window(60)
+    assert not settings.in_window(12 * 60)
+    settings.window_start = "bad"
+    assert settings.window_start == "08:00"
+    settings.ignored = [" Pod/batch-* ", "", "prod/Deployment/api"]
+    patterns = settings.ignored
+    assert patterns == ["Pod/batch-*", "prod/Deployment/api"]
+    assert ignored_by(patterns, "dev", "Pod", "Batch-1")
+    assert ignored_by(patterns, "prod", "Deployment", "api")
+    assert not ignored_by(patterns, "dev", "Deployment", "api")
+    assert not ignored_by(patterns, "dev", "Pod", "")
+    settings.window_start = settings.window_end = "10:00"
+    assert settings.in_window(3 * 60)  # an empty window is no window
+    kept["ignored"] = "Pod/*"
+    assert settings.ignored == []

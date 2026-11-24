@@ -677,3 +677,30 @@ def test_a_context_listed_as_unreadable_that_now_fails_to_sign_in_is_taken_out(
         notifications.poll()
 
     assert notifications.store.items() == []
+
+
+def test_an_ignored_object_is_not_kept(ctx, make_event) -> None:
+    ctx.cluster.contexts = ["prod"]
+    ctx.cluster.events = [make_event("a")]
+    ctx.settings["ignored"] = ["*/*"]
+    notifications = build(ctx)
+
+    notifications.poll()
+
+    assert notifications.store.items() == []
+
+
+def test_the_system_is_not_told_outside_the_window(ctx, make_event) -> None:
+    from datetime import datetime
+
+    ctx.cluster.events = [make_event("a", last_seen=2000.0)]
+    notifications = build(ctx)
+    moment = datetime.fromtimestamp(2000.0)
+    hour = (moment.hour + 2) % 24  # a window that starts two hours from now
+    ctx.settings["window_enabled"] = True
+    ctx.settings["window_start"] = f"{hour:02d}:00"
+    ctx.settings["window_end"] = f"{(hour + 1) % 24:02d}:00"
+
+    notifications.poll()
+
+    assert ctx.ui.system == [] and notifications.bell.unread == 1

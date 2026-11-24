@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A time window for the notices of the system (outside it they are still kept in the bell) and a list of objects to ignore, as `Kind/name` or `context/Kind/name` with `*` and `?`, in the Settings of the extension by @danilogco
+
 ## [1.0.0] - 2026-11-21
 
 ### Added

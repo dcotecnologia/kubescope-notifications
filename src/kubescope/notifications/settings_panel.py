@@ -3,11 +3,14 @@ looked at."""
 
 from collections.abc import Callable
 
+from PySide6.QtCore import QTime
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QHBoxLayout,
     QLabel,
+    QPlainTextEdit,
+    QTimeEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -66,6 +69,47 @@ class NotificationSettingsPanel(QWidget):
         )
         hint.setContentsMargins(26, 0, 0, 0)  # under the text, not under the box
         layout.addWidget(hint)
+
+        self.window_on = QCheckBox(self.tr("Tell the system only between these hours"))
+        layout.addWidget(self.window_on)
+        hours = QHBoxLayout()
+        hours.setContentsMargins(26, 0, 0, 0)
+        hours.setSpacing(12)
+        self.start = QTimeEdit()
+        self.end = QTimeEdit()
+        for edit in (self.start, self.end):
+            edit.setDisplayFormat("HH:mm")
+        hours.addWidget(QLabel(self.tr("From")))
+        hours.addWidget(self.start)
+        hours.addWidget(QLabel(self.tr("to")))
+        hours.addWidget(self.end)
+        hours.addStretch(1)
+        layout.addLayout(hours)
+        window_hint = self._note(
+            self.tr(
+                "Outside these hours the notifications are still kept in the "
+                "bell, but the system is not told. An end before the start runs "
+                "over midnight."
+            )
+        )
+        window_hint.setContentsMargins(26, 0, 0, 0)
+        layout.addWidget(window_hint)
+        self.window_on.toggled.connect(self._window_toggled)
+
+        layout.addSpacing(10)
+        layout.addWidget(self._title(self.tr("Ignored objects")))
+        self.ignored = QPlainTextEdit()
+        self.ignored.setMaximumHeight(110)
+        self.ignored.setPlaceholderText("Pod/batch-*\nprod/Deployment/api")
+        layout.addWidget(self.ignored)
+        layout.addWidget(
+            self._note(
+                self.tr(
+                    "One per line, as Kind/name or context/Kind/name. * and ? "
+                    "stand for any text. What matches is not kept nor told."
+                )
+            )
+        )
         layout.addStretch(1)
         self._fill(DEFAULT)
 
@@ -107,12 +151,25 @@ class NotificationSettingsPanel(QWidget):
             )
         self.interval.setCurrentIndex(self.interval.findData(chosen))
 
+    def _window_toggled(self, on: bool) -> None:
+        self.start.setEnabled(on)
+        self.end.setEnabled(on)
+
     def load(self) -> None:
         self._fill(self.settings.interval)
         self.system.setChecked(self.settings.system_notifications)
+        self.window_on.setChecked(self.settings.window_enabled)
+        self.start.setTime(QTime.fromString(self.settings.window_start, "HH:mm"))
+        self.end.setTime(QTime.fromString(self.settings.window_end, "HH:mm"))
+        self._window_toggled(self.settings.window_enabled)
+        self.ignored.setPlainText("\n".join(self.settings.ignored))
 
     def save(self) -> bool:
         self.settings.interval = self.interval.currentData()
         self.settings.system_notifications = self.system.isChecked()
+        self.settings.window_enabled = self.window_on.isChecked()
+        self.settings.window_start = self.start.time().toString("HH:mm")
+        self.settings.window_end = self.end.time().toString("HH:mm")
+        self.settings.ignored = self.ignored.toPlainText().splitlines()
         self._apply()
         return True

@@ -3,6 +3,7 @@ at the events of the cluster from time to time, and the panel."""
 
 import time
 from collections.abc import Callable
+from datetime import datetime
 from functools import partial
 
 from kubescope.sdk import (
@@ -18,7 +19,7 @@ from kubescope.notifications.auth import is_auth_error
 from kubescope.notifications.bell import Bell
 from kubescope.notifications.panel import NotificationPanel
 from kubescope.notifications.reader import Backoff, read_all
-from kubescope.notifications.settings import NotificationSettings
+from kubescope.notifications.settings import NotificationSettings, ignored_by
 from kubescope.notifications.settings_panel import NotificationSettingsPanel
 from kubescope.notifications.store import ERROR, INFO, Notification, NotificationStore
 
@@ -161,7 +162,14 @@ class Notifications(QObject):
                 continue
             self.backoff.worked(context)
             self.store.discard(key)  # it can be read again
-            news += self.store.merge_changes(context, events)
+            wanted = [
+                event
+                for event in events
+                if not ignored_by(
+                    self.settings.ignored, context, event.kind, event.name
+                )
+            ]
+            news += self.store.merge_changes(context, wanted)
         self.refresh()
         self.announce([item for item in news if item.last_seen >= self._since])
 
@@ -172,6 +180,9 @@ class Notifications(QObject):
         if not items or ui is None or not self.settings.system_notifications:
             return
         now = self._now()
+        moment = datetime.fromtimestamp(now)
+        if not self.settings.in_window(moment.hour * 60 + moment.minute):
+            return  # outside the hours the person chose; the panel keeps it
         items = [
             one
             for one in items

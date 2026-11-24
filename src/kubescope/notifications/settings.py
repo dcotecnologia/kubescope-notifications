@@ -1,6 +1,8 @@
 """The preferences of the extension, kept in its own settings; what does not
 fit is left out and the default is used."""
 
+import re
+from fnmatch import fnmatchcase
 from typing import Any, Protocol
 
 MINIMUM = 15  # seconds; a list of events every few seconds is too much load
@@ -9,6 +11,37 @@ DEFAULT = 60
 WIDTH = 400  # the panel, in pixels
 MIN_WIDTH = 300
 MAX_WIDTH = 900
+DEFAULT_START = "08:00"  # the window in which the system is told, when it is on
+DEFAULT_END = "20:00"
+MAX_IGNORED = 200
+_CLOCK = re.compile(r"([01]\d|2[0-3]):([0-5]\d)")
+
+
+def clock_of(value: object, default: str) -> str:
+    """`HH:MM` when `value` is one, else `default`."""
+    return value if isinstance(value, str) and _CLOCK.fullmatch(value) else default
+
+
+def minutes_of(clock: str) -> int:
+    hours, minutes = clock.split(":")
+    return int(hours) * 60 + int(minutes)
+
+
+def ignored_by(patterns: list[str], context: str, kind: str, name: str) -> bool:
+    """Whether an object is on the ignore list.
+
+    A pattern is `Kind/name`, or `context/Kind/name` to ignore it in one
+    context only; `*` and `?` stand for any text, and case does not
+    matter.
+    """
+    if not name:
+        return False
+    plain = f"{kind}/{name}".lower()
+    full = f"{context}/{kind}/{name}".lower()
+    return any(
+        fnmatchcase(plain, pattern.lower()) or fnmatchcase(full, pattern.lower())
+        for pattern in patterns
+    )
 
 
 class Store(Protocol):
@@ -56,3 +89,57 @@ class NotificationSettings:
     @system_notifications.setter
     def system_notifications(self, value: bool) -> None:
         self._store.set("system_notifications", bool(value))
+
+    @property
+    def window_enabled(self) -> bool:
+        """Whether the system is told only inside the window; off unless the
+        person turned it on."""
+        return self._store.get("window_enabled", False) is True
+
+    @window_enabled.setter
+    def window_enabled(self, value: bool) -> None:
+        self._store.set("window_enabled", bool(value))
+
+    @property
+    def window_start(self) -> str:
+        return clock_of(self._store.get("window_start"), DEFAULT_START)
+
+    @window_start.setter
+    def window_start(self, value: str) -> None:
+        self._store.set("window_start", clock_of(value, DEFAULT_START))
+
+    @property
+    def window_end(self) -> str:
+        return clock_of(self._store.get("window_end"), DEFAULT_END)
+
+    @window_end.setter
+    def window_end(self, value: str) -> None:
+        self._store.set("window_end", clock_of(value, DEFAULT_END))
+
+    def in_window(self, minute_of_day: int) -> bool:
+        """Whether the system may be told at this minute of the day.
+
+        A window that ends before it starts runs over midnight.
+        """
+        if not self.window_enabled:
+            return True
+        start, end = minutes_of(self.window_start), minutes_of(self.window_end)
+        if start == end:
+            return True
+        if start < end:
+            return start <= minute_of_day < end
+        return minute_of_day >= start or minute_of_day < end
+
+    @property
+    def ignored(self) -> list[str]:
+        """The objects that are never kept nor told, one pattern each."""
+        value = self._store.get("ignored", [])
+        if not isinstance(value, list):
+            return []
+        kept = [line.strip() for line in value if isinstance(line, str)]
+        return [line for line in kept if line][:MAX_IGNORED]
+
+    @ignored.setter
+    def ignored(self, value: list[str]) -> None:
+        kept = [line.strip() for line in value if line.strip()]
+        self._store.set("ignored", kept[:MAX_IGNORED])
