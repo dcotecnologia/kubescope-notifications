@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QLabel
+from kubescope.extensions import testing
+from kubescope.extensions.components import UiComponents
 
 import kubescope.notifications as package
 from kubescope.notifications import extension
@@ -164,7 +165,7 @@ def test_the_interval_of_the_settings_sets_the_timer(ctx) -> None:
     assert notifications.timer.interval() == 30000
 
     panel = NotificationSettingsPanel(
-        notifications.settings, notifications.apply_settings
+        UiComponents(), notifications.settings, notifications.apply_settings
     )
     panel.load()
     assert panel.interval.value() == 30
@@ -182,7 +183,7 @@ def test_the_seconds_are_any_whole_number_within_what_is_allowed(ctx) -> None:
     ctx.settings["interval"] = 45
     notifications = build(ctx)
     panel = NotificationSettingsPanel(
-        notifications.settings, notifications.apply_settings
+        UiComponents(), notifications.settings, notifications.apply_settings
     )
 
     panel.load()
@@ -215,7 +216,7 @@ def test_activating_it_wires_the_events_the_settings_and_the_cleanup(
     assert ctx.cluster.asked == []  # switching does not read every cluster
     ctx.events.fire("theme_changed")
     (_title, factory) = ctx.sections[0]
-    assert isinstance(factory(), NotificationSettingsPanel)
+    assert factory() is not None  # the widget of the section
     ctx.events.fire("shutdown")
     for cleanup in ctx.cleanups:
         cleanup()
@@ -444,34 +445,19 @@ def test_a_context_the_app_cannot_open_is_said(ctx, make_event) -> None:
 
 
 def cards_of(notifications):
-    from PySide6.QtCore import QCoreApplication, QEvent
-
-    from kubescope.notifications.panel import Card
-
     # the cards drawn before go with the next turn of the loop
-    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
-    return notifications.panel.list.findChildren(Card)
+    testing.settle()
+    return [
+        one
+        for one in testing.find_all(notifications.panel.list, "frame")
+        if one.objectName() == "noticeCard"
+    ]
 
 
 def click_on(card) -> None:
-    from PySide6.QtCore import QEvent, QPointF, Qt
-    from PySide6.QtGui import QMouseEvent
-    from PySide6.QtWidgets import QApplication
-
-    for button, at in (
-        (Qt.MouseButton.RightButton, (5.0, 5.0)),  # not the left one
-        (Qt.MouseButton.LeftButton, (-50.0, -50.0)),  # released outside the card
-        (Qt.MouseButton.LeftButton, (5.0, 5.0)),
-    ):
-        event = QMouseEvent(
-            QEvent.Type.MouseButtonRelease,
-            QPointF(*at),
-            QPointF(*at),
-            button,
-            button,
-            Qt.KeyboardModifier.NoModifier,
-        )
-        QApplication.sendEvent(card, event)
+    testing.click(card, 5, 5, "release", "right")  # not the left one
+    testing.click(card, -50, -50, "release")  # released outside the card
+    testing.click(card, 5, 5, "release")
 
 
 def test_a_context_that_cannot_be_read_is_listed_with_why_and_goes_when_it_can(
@@ -633,18 +619,15 @@ def test_the_first_look_waits_and_a_switch_of_context_does_not_read_the_clusters
 
 
 def test_unloading_it_takes_its_bell_out_of_the_top_bar(ctx) -> None:
-    import shiboken6
-    from PySide6.QtCore import QCoreApplication, QEvent
-
     notifications = build(ctx)
     bell = notifications.bell
 
     notifications.close()
     assert not notifications.first_look.isActive()
     assert not notifications.timer.isActive()
-    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    testing.settle()
 
-    assert not shiboken6.isValid(bell)
+    assert not ctx.ui.components.is_alive(bell)
 
 
 def test_clearing_is_not_undone_by_the_next_look_at_the_clusters(
@@ -769,7 +752,7 @@ def test_the_time_a_card_shows_is_when_it_began(ctx, make_event) -> None:
     notifications.toggle()
 
     (card,) = cards_of(notifications)
-    labels = [label.text() for label in card.findChildren(QLabel)]
+    labels = testing.texts(card)
 
     assert any("9×" in text and "42m" in text for text in labels)
 
@@ -817,7 +800,7 @@ def test_the_settings_choose_the_kinds_shown(ctx) -> None:
     ctx.settings.pop("hidden")  # what nobody chose: the defaults
     ctx.settings.pop("silent")
     panel = NotificationSettingsPanel(
-        notifications.settings, notifications.apply_settings
+        UiComponents(), notifications.settings, notifications.apply_settings
     )
     panel.load()
     assert {k for k, box in panel.kinds.items() if box.isChecked()} == {
@@ -881,17 +864,17 @@ def test_a_card_has_small_buttons_to_read_it_and_to_go_to_its_context(
     notifications.poll()
     notifications.toggle()
     (card,) = cards_of(notifications)
-    assert not card.read_button.isHidden() and not card.visit_button.isHidden()
+    assert [one.text() for one in card.buttons] == ["Mark as read", "Go to context"]
 
-    card.read_button.click()
+    card.buttons[0].click()
 
     assert notifications.store.unread() == 0
     assert notifications.panel.opened and ctx.invoked == []
     (card,) = cards_of(notifications)
-    assert card.read_button.isHidden()  # read already: only the way to the context
-    assert not card.visit_button.isHidden()
+    # read already: only the way to the context
+    assert [one.text() for one in card.buttons] == ["Go to context"]
 
-    card.visit_button.click()
+    card.buttons[0].click()
 
     assert ctx.invoked[0][1]["context"] == "prod"
     assert not notifications.panel.opened
@@ -903,7 +886,7 @@ def test_a_notice_of_the_app_has_no_button_to_a_context(ctx) -> None:
     notifications.toggle()
     (card,) = cards_of(notifications)
 
-    assert card.visit_button.isHidden() and not card.read_button.isHidden()
+    assert [one.text() for one in card.buttons] == ["Mark as read"]
 
 
 def test_what_the_app_did_is_kept_and_told_by_the_kind_the_person_chose(
@@ -982,7 +965,7 @@ def test_the_kinds_can_be_put_back_to_the_defaults(ctx) -> None:
     ctx.settings["silent"] = []
     notifications = build(ctx)
     panel = NotificationSettingsPanel(
-        notifications.settings, notifications.apply_settings
+        UiComponents(), notifications.settings, notifications.apply_settings
     )
     panel.load()
     assert all(box.isChecked() for box in panel.kinds.values())

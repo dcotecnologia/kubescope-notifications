@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-25
+
+### Changed
+
+- The extension imports nothing from `PySide6`, in its code or in its tests: its page is a plain object that holds its widget, and every widget, timer, icon, text and test helper comes from the SDK (`ctx.ui.components`, `translate`) by @danilogco
+- The section of the Settings is built with the elements of the app, through `ctx.ui.components` (SDK 1.12 and KubeScope 2.9): its fields, selects, buttons, check boxes and notes, so it has no copy of them by @danilogco
+
 ## [1.2.0] - 2026-11-24
 
 ### Changed
@@ -42,7 +49,8 @@ All notable changes to this project are documented here. The format follows
 
 - Notifications of KubeScope as an extension written against the SDK only: a bell in the top bar, beside the Settings, with the number of notifications not read; the Warning events of the context in use are read from time to time, kept in a cache on disk and listed, the newest first, in a panel that slides in from the right, with **Mark all as read** and **Clear**; the events are told apart as warnings and errors, and the time between two reads is chosen in **Settings → Notifications**; every context of the kubeconfig is read in the background (one that fails is left alone for longer each time), the cards name the context and a click on one opens that context, a context that cannot be read is listed with why, except when it is a failed sign-in, which the banner of the app already says, an alert is told apart by its object, reason and context, so it is not listed twice when Kubernetes makes its event again, and the system is told about the same alert once in 30 minutes, what you clear does not come back with the next look at the cluster, only when it happens again, unread ones are highlighted and the ones you read are crossed out (a click reads one), the same error coming back only counts instead of showing as news again, the first look comes 30 seconds after the start and no longer at every switch of context, and a new notification also shows a notice of the operating system, even with KubeScope in front, whose click opens the app, and the errors, the warnings and the new versions that KubeScope itself tells about are listed with them; the panel is resized by dragging its left edge, and the width is kept by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope-notifications/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope-notifications/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/dcotecnologia/kubescope-notifications/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/dcotecnologia/kubescope-notifications/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/dcotecnologia/kubescope-notifications/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/dcotecnologia/kubescope-notifications/releases/tag/v1.0.0

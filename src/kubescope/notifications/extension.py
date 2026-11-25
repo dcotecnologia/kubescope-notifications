@@ -12,12 +12,11 @@ from kubescope.sdk import (
     SHUTDOWN,
     THEME_CHANGED,
     Context,
+    translate,
 )
-from PySide6.QtCore import QCoreApplication, QObject, QPoint, QTimer
 
 from kubescope.notifications.auth import is_auth_error
-from kubescope.notifications.bell import Bell
-from kubescope.notifications.panel import NotificationPanel
+from kubescope.notifications.panel import SHOWN, card_of
 from kubescope.notifications.reader import Backoff, read_all
 from kubescope.notifications.settings import NotificationSettings, ignored_by
 from kubescope.notifications.settings_panel import NotificationSettingsPanel
@@ -47,7 +46,7 @@ def first_line(reason: str) -> str:
     return (lines[0] if lines else reason.strip())[:REASON_LIMIT]
 
 
-class Notifications(QObject):
+class Notifications:
     """Looks at the events of every context of the kubeconfig every few
     seconds, keeps the Warning ones, shows them, and tells the operating system
     about the new ones."""
@@ -61,7 +60,7 @@ class Notifications(QObject):
     ) -> None:
         ui = ctx.ui
         assert ui is not None
-        super().__init__(ui.window)
+        components = ui.components
         self.ctx = ctx
         self.settings = settings
         self.store = store
@@ -70,42 +69,76 @@ class Notifications(QObject):
         self._since = now() - SINCE  # what happened before is not news
         self.backoff = Backoff()
         self._announced: dict[str, float] = {}  # when the system was told of each
-        self.bell = Bell(
-            QCoreApplication.translate("NotificationsExtension", "Notifications"),
-            ui.themed,
+        self.bell = components.counter_button(
+            components.icon("bell", "#ffffff"),
+            translate("NotificationsExtension", "Notifications"),
+            "notificationsBell",
         )
         self.bell.clicked.connect(self.toggle)
-        self.panel = NotificationPanel(ui.central, ui.themed, self._panel_top)
+        self.mark_read_button = components.button(
+            translate("NotificationPanel", "Mark all as read"), on_click=self.mark_read
+        )
+        self.clear_button = components.button(
+            translate("NotificationPanel", "Clear"), on_click=self.clear
+        )
+        self.panel = components.side_panel(
+            ui.central,
+            translate("NotificationPanel", "Notifications"),
+            [self.mark_read_button, self.clear_button],
+            self._panel_top,
+            empty_text=translate(
+                "NotificationPanel",
+                "Nothing to report. Warnings and errors will show here.",
+            ),
+        )
         self.panel.on_closed = lambda: self.bell.setChecked(False)
-        self.panel.on_mark_read = self.mark_read
-        self.panel.on_clear = self.clear
-        self.panel.on_open = self.read_item  # a click on a card only reads it
-        self.panel.on_visit = self.open_context  # reads it and goes to its context
         self.panel.is_inside = lambda position: self.bell.rect().contains(
             self.bell.mapFromGlobal(position)
         )  # the bell opens and closes it itself
-        self.panel.is_unread = self.store.is_unread
         self.panel.on_resized = lambda width: setattr(
             self.settings, "panel_width", width
         )
         self.panel.set_panel_width(self.settings.panel_width)
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.poll)
+        self.timer = components.timer(
+            self.settings.interval * 1000, self.poll, ui.window
+        )
         # the first look comes a while after the start, so that an extension
         # reloaded again and again while it is written does not read every
         # cluster each time
-        self.first_look = QTimer(self)
-        self.first_look.setSingleShot(True)
-        self.first_look.timeout.connect(self.poll)
-        self.first_look.start(FIRST_LOOK_MS)
+        self.first_look = components.timer(
+            FIRST_LOOK_MS, self.poll, ui.window, single_shot=True
+        )
+        self.first_look.start()
         ui.add_top_bar_button(ctx.id, self.bell)
         self.apply_settings()
         self.refresh()
 
     def _panel_top(self) -> int:
         """Where the panel starts: under the top bar."""
-        central = self.panel.host
-        return self.bell.mapTo(central, QPoint(0, self.bell.height())).y() + GAP
+        ui = self.ctx.ui
+        assert ui is not None
+        return ui.components.bottom_of(self.bell, self.panel.host) + GAP
+
+    def show_items(self, items: list[Notification]) -> None:
+        """Draw the notifications in the panel, the newest first."""
+        ui = self.ctx.ui
+        assert ui is not None
+        now = self._now()
+        self.panel.show_cards(
+            [
+                card_of(
+                    ui.components,
+                    item,
+                    now,
+                    self.read_item,  # a click on a card only reads it
+                    self.store.is_unread(item),
+                    self.open_context,  # reads it and goes to its context
+                )
+                for item in items[:SHOWN]
+            ]
+        )
+        self.mark_read_button.setEnabled(bool(items))
+        self.clear_button.setEnabled(bool(items))
 
     def apply_settings(self) -> None:
         """Start (or restart) the look at the cluster at the interval
@@ -155,7 +188,7 @@ class Notifications(QObject):
                     continue
                 added = self.store.add_notice(
                     "warning",
-                    QCoreApplication.translate(
+                    translate(
                         "NotificationsExtension", "Could not read {context}"
                     ).format(context=context),
                     first_line(events),
@@ -222,14 +255,12 @@ class Notifications(QObject):
         items = sorted(items, key=lambda one: one.last_seen, reverse=True)
         if len(items) == 1:
             one = items[0]
-            title = one.reason or QCoreApplication.translate(
-                "NotificationsExtension", "Notification"
-            )
+            title = one.reason or translate("NotificationsExtension", "Notification")
             about = f"{one.kind}/{one.name}" if one.name else ""
             where = " · ".join(part for part in (about, one.context) if part)
             message = f"{where}: {one.message}" if where else one.message
         else:
-            title = QCoreApplication.translate(
+            title = translate(
                 "NotificationsExtension", "{count} new notifications"
             ).format(count=len(items))
             message = "\n".join(
@@ -295,13 +326,13 @@ class Notifications(QObject):
     def refresh(self) -> None:
         items = self.visible()
         self.bell.set_unread(sum(1 for item in items if self.store.is_unread(item)))
-        self.panel.show_items(items, self._now())
+        self.show_items(items)
 
     def toggle(self) -> None:
         if self.panel.opened:
             self.panel.close_panel()
             return
-        self.panel.show_items(self.visible(), self._now())
+        self.show_items(self.visible())
         self.panel.open_panel()
         self.bell.setChecked(True)
 
@@ -371,7 +402,6 @@ class Notifications(QObject):
         self.panel.deleteLater()
         self.bell.hide()
         self.bell.deleteLater()  # the top bar must not keep a bell nobody answers
-        self.deleteLater()
 
 
 def activate(ctx: Context) -> None:
@@ -387,6 +417,10 @@ def activate(ctx: Context) -> None:
     ctx.events.on(SHUTDOWN, notifications.close)
     ctx.add_settings_section(
         TITLE,
-        lambda: NotificationSettingsPanel(settings, notifications.apply_settings),
+        lambda: (
+            NotificationSettingsPanel(
+                ui.components, settings, notifications.apply_settings
+            ).widget
+        ),
     )
     ctx.on_unload(notifications.close)

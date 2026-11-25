@@ -1,40 +1,18 @@
-"""The panel that slides in from the right with the notifications, the newest
-first."""
+"""The cards of the panel that slides in from the right with the notifications,
+the newest first.
+
+The panel itself, its cards and the bell are the ones of the app
+(`ctx.ui.components`).
+"""
 
 from collections.abc import Callable
+from typing import Any
 
-from PySide6.QtCore import (
-    QCoreApplication,
-    QEasingCurve,
-    QEvent,
-    QObject,
-    QPoint,
-    QPointF,
-    QPropertyAnimation,
-    Qt,
-    QTimer,
-    Signal,
-)
-from PySide6.QtGui import QKeySequence, QMouseEvent, QShortcut
-from PySide6.QtWidgets import (
-    QApplication,
-    QFrame,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QScrollArea,
-    QVBoxLayout,
-    QWidget,
-)
+from kubescope.sdk import translate
 
 from kubescope.notifications.store import ERROR, INFO, NORMAL, Notification
 
-WIDTH = 400  # the usual width, which can be dragged
-MIN_WIDTH = 300
-MAX_WIDTH = 900
-GRIP = 6  # the strip at the left edge that is dragged
 SHOWN = 200  # the cards drawn; the store keeps more
-SLIDE_MS = 220
 
 
 def ago(seconds: float) -> str:
@@ -42,404 +20,57 @@ def ago(seconds: float) -> str:
     seconds = max(int(seconds), 0)
     for unit, size in (("d", 86400), ("h", 3600), ("m", 60)):
         if seconds >= size:
-            return QCoreApplication.translate(
-                "NotificationPanel", "{amount}{unit} ago"
-            ).format(amount=seconds // size, unit=unit)
-    return QCoreApplication.translate("NotificationPanel", "just now")
-
-
-def style(themed: Callable[[str, bool], str]) -> str:
-    """The style sheet of the panel, in the colors of the theme in use."""
-    return f"""
-QFrame#notificationPanel {{
-    background: {themed("#ffffff", False)};
-    border-left: 1px solid {themed("#e1e3e9", False)};
-}}
-QLabel#notificationTitle {{
-    color: {themed("#17191e", True)}; font-size: 15px; font-weight: 700;
-}}
-QLabel#notificationEmpty {{ color: {themed("#6b7380", True)}; }}
-QScrollArea#notificationScroll, QWidget#notificationList {{
-    background: transparent; border: 0;
-}}
-QFrame#notificationCard {{
-    background: {themed("#f3f4f7", False)};
-    border: 1px solid {themed("#e1e3e9", False)}; border-radius: 8px;
-}}
-QFrame#notificationCard[level="error"] {{
-    border-left: 3px solid {themed("#a33d45", False)};
-}}
-QFrame#notificationCard[level="info"], QFrame#notificationCard[level="normal"] {{
-    border-left: 3px solid {themed("#3220a0", False)};
-}}
-QFrame#notificationCard[level="warning"] {{
-    border-left: 3px solid {themed("#985415", False)};
-}}
-QLabel#notificationReason {{
-    color: {themed("#20232a", True)}; font-weight: 700;
-}}
-QLabel#notificationMessage {{ color: {themed("#20232a", True)}; }}
-QFrame#notificationCard[read="false"] {{
-    background: {themed("#eee9f7", False)};
-    border-top-color: {themed("#b9b3dc", False)};
-    border-right-color: {themed("#b9b3dc", False)};
-    border-bottom-color: {themed("#b9b3dc", False)};
-}}  /* the left edge keeps the color of the level */
-QFrame#notificationCard[read="true"] QLabel {{
-    color: {themed("#6b7380", True)};
-}}
-QLabel#notificationMeta {{ color: {themed("#6b7380", True)}; font-size: 10px; }}
-"""
-
-
-class _Grip(QWidget):
-    """The strip at the left edge of the panel, which is dragged to make it
-    wider or narrower."""
-
-    dragged = Signal(int)  # the width the panel should have
-    released = Signal()
-
-    def __init__(self, panel: QWidget) -> None:
-        super().__init__(panel)
-        self._panel = panel
-        self._origin: QPointF | None = None
-        self._start = 0
-        self.setCursor(Qt.CursorShape.SizeHorCursor)
-
-    def mousePressEvent(self, event: QMouseEvent) -> None:
-        self._origin = event.globalPosition()
-        self._start = self._panel.width()
-
-    def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        if self._origin is not None:
-            moved = event.globalPosition() - self._origin
-            self.dragged.emit(self._start - int(moved.x()))  # leftward is wider
-
-    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
-        if self._origin is not None:
-            self._origin = None
-            self.released.emit()
-
-
-class Card(QFrame):
-    """One notification."""
-
-    def __init__(
-        self,
-        item: Notification,
-        now: float,
-        opened: Callable[[Notification], None] = lambda _item: None,
-        unread: bool = True,
-        visit: Callable[[Notification], None] = lambda _item: None,
-    ) -> None:
-        super().__init__()
-        self.item = item
-        self.unread = unread
-        self._opened = opened
-        self.setObjectName("notificationCard")
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setProperty("read", "false" if unread else "true")
-        # a click reads it, and nothing else
-        self.setToolTip(QCoreApplication.translate("NotificationPanel", "Mark as read"))
-        self.setProperty("level", item.level)
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 9, 12, 9)
-        layout.setSpacing(3)
-        head = QHBoxLayout()
-        reason = QLabel(
-            item.reason or QCoreApplication.translate("NotificationPanel", "Event")
-        )
-        reason.setObjectName("notificationReason")
-        reason.setWordWrap(True)
-        level = {
-            ERROR: QCoreApplication.translate("NotificationPanel", "Error"),
-            INFO: QCoreApplication.translate("NotificationPanel", "Info"),
-            NORMAL: QCoreApplication.translate("NotificationPanel", "Info"),
-        }.get(item.level, QCoreApplication.translate("NotificationPanel", "Warning"))
-        kind = QLabel(level)
-        kind.setObjectName("notificationMeta")
-        head.addWidget(reason)
-        head.addStretch(1)
-        head.addWidget(kind)
-        layout.addLayout(head)
-        about = " · ".join(
-            part
-            for part in (
-                item.context,
-                f"{item.kind}/{item.name}" if item.name else "",
-                item.namespace,
+            return translate("NotificationPanel", "{amount}{unit} ago").format(
+                amount=seconds // size, unit=unit
             )
-            if part
+    return translate("NotificationPanel", "just now")
+
+
+def card_of(
+    components: Any,
+    item: Notification,
+    now: float,
+    opened: Callable[[Notification], None],
+    unread: bool,
+    visit: Callable[[Notification], None],
+) -> Any:
+    """The card of one notification: what happened, where, how long ago, and
+    the links to read it and to go to its context."""
+    level = {
+        ERROR: translate("NotificationPanel", "Error"),
+        INFO: translate("NotificationPanel", "Info"),
+        NORMAL: translate("NotificationPanel", "Info"),
+    }.get(item.level, translate("NotificationPanel", "Warning"))
+    about = " · ".join(
+        part
+        for part in (
+            item.context,
+            f"{item.kind}/{item.name}" if item.name else "",
+            item.namespace,
         )
-        if about:
-            where = QLabel(about)
-            where.setObjectName("notificationMeta")
-            where.setWordWrap(True)
-            layout.addWidget(where)
-        message = QLabel(item.message)
-        message.setObjectName("notificationMessage")
-        message.setWordWrap(True)
-        layout.addWidget(message)
-        times = f"{item.count}× · " if item.count > 1 else ""
-        when = QLabel(times + ago(now - item.first_seen))  # how long ago it began
-        when.setObjectName("notificationMeta")
-        layout.addWidget(when)
-        actions = QHBoxLayout()
-        actions.setSpacing(10)
-        self.read_button = QPushButton(
-            QCoreApplication.translate("NotificationPanel", "Mark as read")
+        if part
+    )
+    times = f"{item.count}× · " if item.count > 1 else ""
+    actions: list[tuple[str, Callable[[], None]]] = []
+    if unread:
+        actions.append(
+            (translate("NotificationPanel", "Mark as read"), lambda: opened(item))
         )
-        self.visit_button = QPushButton(
-            QCoreApplication.translate("NotificationPanel", "Go to context")
+    if item.context:
+        actions.append(
+            (translate("NotificationPanel", "Go to context"), lambda: visit(item))
         )
-        self.read_button.clicked.connect(lambda: opened(item))
-        self.visit_button.clicked.connect(lambda: visit(item))
-        for button in (self.read_button, self.visit_button):
-            button.setProperty("variant", "link")  # small, quiet
-            button.setCursor(Qt.CursorShape.PointingHandCursor)
-            button.setStyleSheet("font-size: 11px; padding: 0;")
-            actions.addWidget(button)
-        actions.addStretch(1)
-        self.read_button.setVisible(unread)
-        self.visit_button.setVisible(bool(item.context))
-        if unread or item.context:
-            layout.addLayout(actions)
-        for label in self.findChildren(QLabel):  # the click is the card's
-            label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        if not unread:  # read: crossed out
-            for label in (reason, message):
-                font = label.font()
-                font.setStrikeOut(True)
-                font.setBold(False)
-                label.setFont(font)
-
-    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
-        if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(
-            event.position().toPoint()
-        ):
-            self._opened(self.item)
-        super().mouseReleaseEvent(event)
-
-
-class NotificationPanel(QFrame):
-    """Sits on `host`, under the top bar, and slides in and out at its right
-    edge."""
-
-    def __init__(
-        self,
-        host: QWidget,
-        themed: Callable[[str, bool], str],
-        top: Callable[[], int],
-    ) -> None:
-        super().__init__(host)
-        self.host = host
-        self._themed = themed
-        self._top = top
-        self.setObjectName("notificationPanel")
-        self._width = WIDTH
-        self.setFixedWidth(WIDTH)
-        self.hide()
-        self.opened = False
-        self.on_closed: Callable[[], None] = lambda: None
-        self.on_clear: Callable[[], None] = lambda: None
-        self.on_mark_read: Callable[[], None] = lambda: None
-        self.on_resized: Callable[[int], None] = lambda width: None
-        self.on_open: Callable[[Notification], None] = lambda item: None
-        self.on_visit: Callable[[Notification], None] = lambda item: None
-        # a place on the screen that belongs to the panel's own button: a click
-        # there is not a click outside, which would close the panel
-        self.is_inside: Callable[[QPoint], bool] = lambda position: False
-        self.is_unread: Callable[[Notification], bool] = lambda item: True
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(14, 14, 14, 14)
-        layout.setSpacing(10)
-        header = QHBoxLayout()
-        title = QLabel(QCoreApplication.translate("NotificationPanel", "Notifications"))
-        title.setObjectName("notificationTitle")
-        header.addWidget(title)
-        header.addStretch(1)
-        self.mark_read = QPushButton(
-            QCoreApplication.translate("NotificationPanel", "Mark all as read")
-        )
-        self.clear_all = QPushButton(
-            QCoreApplication.translate("NotificationPanel", "Clear")
-        )
-        self.close_button = QPushButton("✕")
-        for button in (self.mark_read, self.clear_all):
-            button.setProperty("variant", "secondary")  # the buttons of the app
-            header.addWidget(button)
-        self.close_button.setProperty("variant", "link")
-        header.addWidget(self.close_button)
-        self.mark_read.clicked.connect(lambda: self.on_mark_read())
-        self.clear_all.clicked.connect(lambda: self.on_clear())
-        self.close_button.clicked.connect(self.close_panel)
-        layout.addLayout(header)
-
-        self.scroller = QScrollArea()
-        self.scroller.setObjectName("notificationScroll")
-        self.scroller.setWidgetResizable(True)
-        self.scroller.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
-        self._place: int | None = None  # where the list was before it was drawn
-        self.list = QWidget()
-        self.list.setObjectName("notificationList")
-        self.rows = QVBoxLayout(self.list)
-        self.rows.setContentsMargins(0, 0, 4, 0)
-        self.rows.setSpacing(8)
-        self.scroller.setWidget(self.list)
-        layout.addWidget(self.scroller, 1)
-        self.scroller.verticalScrollBar().rangeChanged.connect(self._restore_place)
-
-        self.animation = QPropertyAnimation(self, b"pos", self)
-        self.animation.setDuration(SLIDE_MS)
-        self.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
-        self.animation.finished.connect(self._slid)
-        # Esc closes it, but only while it is open, so the key stays free for
-        # the rest of the window the rest of the time
-        self._escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), host)
-        self._escape.setContext(Qt.ShortcutContext.WindowShortcut)
-        self._escape.setEnabled(False)
-        self._escape.activated.connect(self.close_panel)
-        self.grip = _Grip(self)
-        self.grip.dragged.connect(self.set_panel_width)
-        self.grip.released.connect(lambda: self.on_resized(self._width))
-        host.installEventFilter(self)
-        self.restyle()
-
-    def restyle(self) -> None:
-        self.setStyleSheet(style(self._themed))
-
-    def show_items(self, items: list[Notification], now: float) -> None:
-        """Draw the notifications, the newest first, with the place of the list
-        kept."""
-        bar = self.scroller.verticalScrollBar()
-        place = bar.value()
-        while (child := self.rows.takeAt(0)) is not None:
-            if (widget := child.widget()) is not None:
-                widget.deleteLater()
-        if not items:
-            empty = QLabel(
-                QCoreApplication.translate(
-                    "NotificationPanel",
-                    "Nothing to report. Warnings and errors will show here.",
-                )
-            )
-            empty.setObjectName("notificationEmpty")
-            empty.setWordWrap(True)
-            self.rows.addWidget(empty)
-        for item in items[:SHOWN]:
-            self.rows.addWidget(
-                Card(
-                    item,
-                    now,
-                    lambda one: self.on_open(one),
-                    self.is_unread(item),
-                    lambda one: self.on_visit(one),
-                )
-            )
-        self.rows.addStretch(1)
-        self._place = place if place else None  # given back once the list is long
-        QTimer.singleShot(300, self.scroller, self._forget_place)
-        self.mark_read.setEnabled(bool(items))
-        self.clear_all.setEnabled(bool(items))
-
-    def set_panel_width(self, width: int) -> None:
-        """Give the panel a width, within what keeps it usable; while it is
-        open it stays at the right edge."""
-        self._width = min(max(width, MIN_WIDTH), MAX_WIDTH)
-        if self.opened and self.animation.state() != QPropertyAnimation.State.Running:
-            shown, _hidden = self._geometry()
-            self.move(shown)
-        else:
-            self.setFixedWidth(self._fitted())
-        self._place_grip()
-
-    def _fitted(self) -> int:
-        """The width it has now: the one chosen, as far as the window lets."""
-        room = max(self.host.width() - 40, 200)
-        return min(self._width, MAX_WIDTH, room)
-
-    def _place_grip(self) -> None:
-        self.grip.setGeometry(0, 0, GRIP, self.height())
-        self.grip.raise_()
-
-    def _restore_place(self, _minimum: int, maximum: int) -> None:
-        """The list grew back to where the person was: put them there."""
-        if self._place is not None and maximum >= self._place:
-            self.scroller.verticalScrollBar().setValue(self._place)
-            self._place = None
-
-    def _forget_place(self) -> None:
-        self._place = None
-
-    def _geometry(self) -> tuple[QPoint, QPoint]:
-        top = self._top()
-        width = self._fitted()
-        self.setFixedSize(width, max(self.host.height() - top, 0))
-        self._place_grip()
-        shown = QPoint(self.host.width() - width, top)
-        return shown, QPoint(self.host.width(), top)
-
-    def open_panel(self) -> None:
-        shown, hidden = self._geometry()
-        self.opened = True
-        self._escape.setEnabled(True)
-        app = QApplication.instance()
-        if app is not None:  # a click anywhere else of the window closes it
-            app.installEventFilter(self)
-        self.move(hidden)
-        self.show()
-        self.raise_()
-        self.animation.stop()
-        self.animation.setStartValue(hidden)
-        self.animation.setEndValue(shown)
-        self.animation.start()
-
-    def close_panel(self) -> None:
-        if not self.opened:
-            return
-        shown, hidden = self._geometry()
-        self.opened = False
-        self._escape.setEnabled(False)
-        app = QApplication.instance()
-        if app is not None:
-            app.removeEventFilter(self)
-        self.animation.stop()
-        self.animation.setStartValue(self.pos())
-        self.animation.setEndValue(hidden)
-        self.animation.start()
-        self.on_closed()
-
-    def _slid(self) -> None:
-        if not self.opened:
-            self.hide()
-
-    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
-        """Follow the window as it is resized, and close the panel when a click
-        of the window falls outside of it."""
-        if (
-            self.opened
-            and event.type() == QEvent.Type.MouseButtonPress
-            and isinstance(watched, QWidget)
-            and watched.window() is self.window()
-            and isinstance(event, QMouseEvent)
-        ):
-            position = event.globalPosition().toPoint()
-            # a press that nothing takes goes up to the parent, which this sees too:
-            # it is the place of the click that says where it was, and what is
-            # inside the panel (its grip and its cards) is the panel's own
-            own = watched is self or self.isAncestorOf(watched)
-            inside = self.rect().contains(self.mapFromGlobal(position))
-            if not own and not inside and not self.is_inside(position):
-                self.close_panel()
-        if (
-            watched is self.host
-            and event.type() == QEvent.Type.Resize
-            and self.opened
-            and self.animation.state() != QPropertyAnimation.State.Running
-        ):
-            shown, _hidden = self._geometry()
-            self.move(shown)
-        return False
+    card = components.notice_card(
+        item.reason or translate("NotificationPanel", "Event"),
+        level,
+        about,
+        item.message,
+        times + ago(now - item.first_seen),  # how long ago it began
+        item.level,
+        unread,
+        translate("NotificationPanel", "Mark as read"),
+        lambda: opened(item),
+        actions,
+    )
+    card.item = item  # what the card shows
+    return card
