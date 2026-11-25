@@ -1,3 +1,5 @@
+from PySide6.QtWidgets import QLabel
+
 import kubescope.notifications as package
 from kubescope.notifications import extension
 from kubescope.notifications.extension import Notifications, activate
@@ -7,6 +9,10 @@ from kubescope.notifications.store import NotificationStore
 
 
 def build(ctx, now=2000.0) -> Notifications:
+    # the tests of what is told start from everything on, but the informative
+    # events and the updates of the app
+    ctx.settings.setdefault("hidden", ["normal"])
+    ctx.settings.setdefault("silent", ["info", "normal"])
     settings = NotificationSettings(ctx.settings)
     store = NotificationStore(ctx.data_directory / "n.json")
     return Notifications(ctx, settings, store, now=lambda: now)  # type: ignore[arg-type]
@@ -94,12 +100,11 @@ def test_the_bell_opens_the_panel_and_what_is_in_it_stays_unread_until_clicked(
     (card,) = cards_of(notifications)
     assert card.unread
 
-    click_on(card)  # clicking one reads it (and goes to its context)
+    click_on(card)  # clicking one only reads it: the panel and the context stay
     assert notifications.bell.unread == 0 and notifications.store.unread() == 0
-    assert not notifications.panel.opened  # it went to the context of the card
-    notifications.bell.click()
+    assert notifications.panel.opened and ctx.invoked == []
     (card,) = cards_of(notifications)
-    assert not card.unread and notifications.panel.opened
+    assert not card.unread
 
     notifications.bell.click()  # again: it closes
     assert not notifications.panel.opened and not notifications.bell.isChecked()
@@ -117,7 +122,7 @@ def test_an_event_that_comes_while_the_panel_is_open_counts_as_unread(
     assert notifications.bell.unread == 1 and len(notifications.store.items()) == 1
 
 
-def test_an_alert_that_happens_again_after_it_was_read_is_unread_again(
+def test_an_alert_that_goes_on_stays_read_and_one_that_comes_back_is_unread_again(
     ctx, make_event
 ) -> None:
     clock = [2000.0]
@@ -129,8 +134,14 @@ def test_an_alert_that_happens_again_after_it_was_read_is_unread_again(
     notifications.open_context(notifications.store.items()[0])
     assert notifications.store.unread() == 0
 
-    clock[0] = 3000.0
+    clock[0] = 3000.0  # it goes on: a count that moves is not news
     ctx.cluster.events = [make_event("b", name="api", last_seen=2900.0, count=3)]
+    notifications.poll()
+    assert notifications.store.unread() == 0
+    assert notifications.store.items()[0].count == 3
+
+    clock[0] = 9000.0  # it comes back after more than an hour of quiet
+    ctx.cluster.events = [make_event("c", name="api", last_seen=8900.0, count=4)]
     notifications.poll()
 
     assert notifications.store.unread() == 1
@@ -156,9 +167,9 @@ def test_the_interval_of_the_settings_sets_the_timer(ctx) -> None:
         notifications.settings, notifications.apply_settings
     )
     panel.load()
-    assert panel.interval.currentData() == 30
+    assert panel.interval.value() == 30
     assert panel.system.isChecked()  # on unless turned off
-    panel.interval.setCurrentIndex(panel.interval.findData(120))
+    panel.interval.setValue(120)
     panel.system.setChecked(False)
     assert panel.save() is True
     assert notifications.timer.interval() == 120000
@@ -167,7 +178,7 @@ def test_the_interval_of_the_settings_sets_the_timer(ctx) -> None:
     assert not panel.system.isChecked()
 
 
-def test_a_time_that_is_not_one_of_the_usual_is_kept_in_the_list(ctx) -> None:
+def test_the_seconds_are_any_whole_number_within_what_is_allowed(ctx) -> None:
     ctx.settings["interval"] = 45
     notifications = build(ctx)
     panel = NotificationSettingsPanel(
@@ -175,9 +186,21 @@ def test_a_time_that_is_not_one_of_the_usual_is_kept_in_the_list(ctx) -> None:
     )
 
     panel.load()
+    assert panel.interval.value() == 45  # not one of a fixed list
+    assert panel.interval.suffix() == " seconds"
 
-    assert panel.interval.currentData() == 45
-    assert panel.interval.currentText() == "45 seconds"
+    panel.interval.lineEdit().setText("97")  # typed, not yet confirmed
+    panel.save()
+    assert ctx.settings["interval"] == 97
+    assert notifications.timer.interval() == 97000
+
+    panel.interval.setValue(1)  # too often is brought to the least
+    assert panel.interval.value() == 15
+    panel.interval.setValue(99999)
+    assert panel.interval.value() == 3600
+    panel.interval.lineEdit().setText("abc")  # not a number: the last one stays
+    panel.save()
+    assert ctx.settings["interval"] == 3600
 
 
 def test_activating_it_wires_the_events_the_settings_and_the_cleanup(
@@ -377,7 +400,7 @@ def test_a_notice_about_several_things_opens_the_panel(ctx, make_event) -> None:
     assert notifications.panel.opened
 
 
-def test_the_panel_shows_every_context_and_a_click_opens_the_one_of_the_card(
+def test_the_panel_shows_every_context_and_a_click_only_reads_the_card(
     ctx, make_event
 ) -> None:
     ctx.cluster.contexts = ["prod", "staging"]
@@ -391,9 +414,9 @@ def test_the_panel_shows_every_context_and_a_click_opens_the_one_of_the_card(
 
     click_on(staging)
 
-    assert ctx.invoked[-1][0] == "switch_context"
-    assert ctx.invoked[-1][1]["context"] == "staging"
-    assert not notifications.panel.opened  # it leaves the panel
+    assert ctx.invoked == []  # the context stays
+    assert notifications.panel.opened  # and so does the panel
+    assert notifications.store.unread() == 1  # only the one of prod is left
 
 
 def test_a_notice_of_the_app_has_no_context_to_open(ctx) -> None:
@@ -639,7 +662,7 @@ def test_clearing_is_not_undone_by_the_next_look_at_the_clusters(
         notifications.poll()
     assert notifications.store.items() == []
 
-    ctx.cluster.events = [make_event("b", name="api", last_seen=2500.0)]
+    ctx.cluster.events = [make_event("b", name="api", last_seen=6000.0)]
     notifications.poll()
     assert [item.name for item in notifications.store.items()] == ["api"]
 
@@ -704,3 +727,278 @@ def test_the_system_is_not_told_outside_the_window(ctx, make_event) -> None:
     notifications.poll()
 
     assert ctx.ui.system == [] and notifications.bell.unread == 1
+
+
+def test_an_alert_that_keeps_happening_is_told_once_and_again_only_after_a_quiet_time(
+    ctx, make_event
+) -> None:
+    clock = [2000.0]
+    settings = NotificationSettings(ctx.settings)
+    store = NotificationStore(ctx.data_directory / "n.json")
+    notifications = Notifications(ctx, settings, store, now=lambda: clock[0])  # type: ignore[arg-type]
+    ctx.cluster.events = [make_event("a", name="api", last_seen=1990.0)]
+    notifications.poll()
+    assert len(ctx.ui.system) == 1
+
+    for minute in range(1, 50):  # it goes on for most of an hour, every minute
+        clock[0] = 2000.0 + minute * 60
+        ctx.cluster.events = [
+            make_event("a", name="api", last_seen=clock[0] - 5, count=2 + minute)
+        ]
+        notifications.poll()
+    assert len(ctx.ui.system) == 1  # no word about it going on
+    assert notifications.store.items()[0].count == 51
+    assert notifications.bell.unread == 1  # and nothing new to read
+
+    clock[0] += 7200.0  # two hours of quiet, and then it happens again
+    ctx.cluster.events = [make_event("a", name="api", last_seen=clock[0] - 5, count=99)]
+    notifications.poll()
+
+    assert len(ctx.ui.system) == 2
+
+
+def test_the_time_a_card_shows_is_when_it_began(ctx, make_event) -> None:
+    clock = [5000.0]
+    settings = NotificationSettings(ctx.settings)
+    store = NotificationStore(ctx.data_directory / "n.json")
+    notifications = Notifications(ctx, settings, store, now=lambda: clock[0])  # type: ignore[arg-type]
+    ctx.cluster.events = [
+        make_event("a", name="api", last_seen=4990.0, count=9, first_seen=2480.0)
+    ]
+    notifications.poll()
+    notifications.toggle()
+
+    (card,) = cards_of(notifications)
+    labels = [label.text() for label in card.findChildren(QLabel)]
+
+    assert any("9×" in text and "42m" in text for text in labels)
+
+
+def test_an_alert_that_left_the_cluster_leaves_the_panel(ctx, make_event) -> None:
+    ctx.cluster.events = [make_event("a", name="api"), make_event("b", name="web")]
+    notifications = build(ctx)
+    notifications.poll()
+    assert len(notifications.store.items()) == 2
+
+    ctx.cluster.events = [make_event("b", name="web")]
+    notifications.poll()
+
+    assert [item.name for item in notifications.store.items()] == ["web"]
+
+
+def test_the_kinds_the_person_turns_off_are_not_shown_counted_nor_told(
+    ctx, make_event
+) -> None:
+    ctx.cluster.events = [
+        make_event("a", name="api", reason="BackOff", last_seen=2000.0),
+        make_event("b", name="web", reason="Unhealthy", last_seen=2000.0),
+    ]
+    ctx.settings["hidden"] = ["warning", "normal"]
+    notifications = build(ctx)
+
+    notifications.poll()
+
+    assert [item.reason for item in notifications.visible()] == ["BackOff"]
+    assert len(notifications.store.items()) == 2  # kept, only not shown
+    assert notifications.bell.unread == 1
+    ((title, _, _),) = ctx.ui.system
+    assert title == "BackOff"
+
+    ctx.settings["hidden"] = ["error", "warning", "normal", "info"]
+    notifications.refresh()
+    assert notifications.visible() == [] and notifications.bell.unread == 0
+    ctx.ui.system.clear()
+    notifications.announce(notifications.store.items())
+    assert ctx.ui.system == []
+
+
+def test_the_settings_choose_the_kinds_shown(ctx) -> None:
+    notifications = build(ctx)
+    ctx.settings.pop("hidden")  # what nobody chose: the defaults
+    ctx.settings.pop("silent")
+    panel = NotificationSettingsPanel(
+        notifications.settings, notifications.apply_settings
+    )
+    panel.load()
+    assert {k for k, box in panel.kinds.items() if box.isChecked()} == {
+        "error",
+        "pod",
+        "info",
+    }
+    assert {k for k, box in panel.told.items() if box.isChecked()} == {
+        "error",
+        "pod",
+        "info",
+    }
+
+    panel.kinds["warning"].setChecked(True)
+    panel.told["warning"].setChecked(True)
+    panel.save()
+    assert ctx.settings["hidden"] == ["normal", "action", "task"]
+    assert ctx.settings["silent"] == ["normal", "action", "task"]
+    panel.load()
+    assert panel.kinds["warning"].isChecked()
+
+    ctx.settings["hidden"] = "nope"  # damaged: the defaults
+    assert notifications.settings.shown == ["error", "info", "pod"]
+
+
+def test_informative_events_are_read_only_when_asked_and_not_told_to_the_system(
+    ctx, make_event
+) -> None:
+    ctx.cluster.events = [
+        make_event("n", name="api", reason="Pulled", type="Normal", last_seen=2000.0),
+        make_event("w", name="web", reason="Unhealthy", last_seen=2000.0),
+    ]
+    notifications = build(ctx)
+    notifications.poll()
+    assert ctx.cluster.asked[-1][1] == ("Warning",)  # not asked for by default
+
+    ctx.settings["hidden"] = ["info"]
+    notifications._busy = False
+    notifications.poll()
+
+    assert ctx.cluster.asked[-1][1] == ("Warning", "Normal")
+    assert sorted(item.reason for item in notifications.visible()) == [
+        "Pulled",
+        "Unhealthy",
+    ]
+    assert "Pulled" not in [title for title, _, _ in ctx.ui.system]
+
+    ctx.settings["hidden"] = ["normal"]  # off again: kept, not shown
+    notifications.refresh()
+    assert [item.reason for item in notifications.visible()] == ["Unhealthy"]
+    ctx.cluster.events = [ctx.cluster.events[1]]
+    notifications.poll()
+    assert any(item.reason == "Pulled" for item in notifications.store.items())
+
+
+def test_a_card_has_small_buttons_to_read_it_and_to_go_to_its_context(
+    ctx, make_event
+) -> None:
+    ctx.cluster.events = [make_event(last_seen=2000.0)]
+    notifications = build(ctx)
+    notifications.poll()
+    notifications.toggle()
+    (card,) = cards_of(notifications)
+    assert not card.read_button.isHidden() and not card.visit_button.isHidden()
+
+    card.read_button.click()
+
+    assert notifications.store.unread() == 0
+    assert notifications.panel.opened and ctx.invoked == []
+    (card,) = cards_of(notifications)
+    assert card.read_button.isHidden()  # read already: only the way to the context
+    assert not card.visit_button.isHidden()
+
+    card.visit_button.click()
+
+    assert ctx.invoked[0][1]["context"] == "prod"
+    assert not notifications.panel.opened
+
+
+def test_a_notice_of_the_app_has_no_button_to_a_context(ctx) -> None:
+    notifications = build(ctx)
+    notifications.notice("error", "Boom", "it broke", "e", True)
+    notifications.toggle()
+    (card,) = cards_of(notifications)
+
+    assert card.visit_button.isHidden() and not card.read_button.isHidden()
+
+
+def test_what_the_app_did_is_kept_and_told_by_the_kind_the_person_chose(
+    ctx,
+) -> None:
+    notifications = build(ctx)
+    clicked: list[int] = []
+
+    notifications.notice(
+        "info",
+        "KubeScope",
+        "Scaled api",
+        "action:1",
+        True,
+        "prod",
+        "action",
+        lambda: clicked.append(1),
+        True,
+    )
+    notifications.notice(
+        "info", "KubeScope", "web is ready", "pod:1", True, "prod", "pod", None, True
+    )
+
+    assert sorted(i.message for i in notifications.visible()) == [
+        "Scaled api",
+        "web is ready",
+    ]
+    assert [(t, m) for t, m, _c in ctx.ui.system] == [
+        ("KubeScope", "Scaled api"),
+        ("KubeScope", "web is ready"),
+    ]
+    ctx.ui.system[0][2]()
+    assert clicked == [1]
+    ctx.ui.system[1][2]()  # no click given: the panel opens
+    assert notifications.panel.opened
+
+    ctx.settings["silent"] = ["action", "pod"]  # no longer told, still listed
+    notifications.notice(
+        "info", "KubeScope", "done again", "action:2", True, "", "action", None, True
+    )
+    ctx.settings["hidden"] = ["action"]  # not listed: not told either, even if asked
+    ctx.settings["silent"] = []
+    notifications.notice(
+        "info", "KubeScope", "third", "action:3", True, "", "action", None, True
+    )
+    assert len(ctx.ui.system) == 2
+    assert [i.message for i in notifications.visible()] == ["web is ready"]
+
+
+def test_a_notice_of_something_done_is_not_told_when_the_system_is_off_or_not_asked(
+    ctx,
+) -> None:
+    ctx.settings["system_notifications"] = False
+    notifications = build(ctx)
+
+    notifications.notice(
+        "info", "KubeScope", "Scaled", "action:1", True, "", "action", None, True
+    )
+    notifications.notice(
+        "info", "KubeScope", "Quiet", "action:2", True, "", "action", None, False
+    )
+    assert ctx.ui.system == []  # the system is off, or was not asked
+
+
+def test_the_kinds_an_earlier_version_kept_are_read_and_new_ones_are_on(ctx) -> None:
+    ctx.settings["shown"] = ["error", "info"]  # kept when only these four existed
+    settings = NotificationSettings(ctx.settings)
+
+    assert settings.shown == ["error", "info", "action", "pod", "task"]
+    settings.shown = ["warning"]
+    assert settings.shown == ["warning"]  # what is chosen now wins
+
+
+def test_the_kinds_can_be_put_back_to_the_defaults(ctx) -> None:
+    ctx.settings["hidden"] = []
+    ctx.settings["silent"] = []
+    notifications = build(ctx)
+    panel = NotificationSettingsPanel(
+        notifications.settings, notifications.apply_settings
+    )
+    panel.load()
+    assert all(box.isChecked() for box in panel.kinds.values())
+
+    panel.reset.click()
+
+    assert {k for k, box in panel.kinds.items() if box.isChecked()} == {
+        "error",
+        "pod",
+        "info",
+    }
+    assert {k for k, box in panel.told.items() if box.isChecked()} == {
+        "error",
+        "pod",
+        "info",
+    }
+    assert ctx.settings["hidden"] == []  # nothing is kept until it is saved
+    panel.save()
+    assert ctx.settings["hidden"] == ["warning", "normal", "action", "task"]

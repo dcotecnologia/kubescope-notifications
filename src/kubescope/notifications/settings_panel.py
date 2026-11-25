@@ -3,19 +3,29 @@ looked at."""
 
 from collections.abc import Callable
 
-from PySide6.QtCore import QTime
+from PySide6.QtCore import Qt, QTime
 from PySide6.QtWidgets import (
     QCheckBox,
-    QComboBox,
+    QFrame,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QPlainTextEdit,
+    QPushButton,
+    QSpinBox,
     QTimeEdit,
     QVBoxLayout,
     QWidget,
 )
 
-from kubescope.notifications.settings import DEFAULT, NotificationSettings
+from kubescope.notifications.settings import (
+    DEFAULT,
+    HIDDEN,
+    MAXIMUM,
+    MINIMUM,
+    SILENT,
+    NotificationSettings,
+)
 
 
 class NotificationSettingsPanel(QWidget):
@@ -43,8 +53,11 @@ class NotificationSettingsPanel(QWidget):
         row = QHBoxLayout()
         row.setSpacing(12)
         row.addWidget(QLabel(self.tr("Look for new events every")))
-        self.interval = QComboBox()
-        self.interval.setMinimumWidth(220)
+        self.interval = QSpinBox()  # whole seconds, within what the app allows
+        self.interval.setRange(MINIMUM, MAXIMUM)
+        self.interval.setSuffix(self.tr(" seconds"))
+        self.interval.setKeyboardTracking(False)
+        self.interval.setMinimumWidth(140)
         row.addWidget(self.interval)
         row.addStretch(1)
         layout.addLayout(row)
@@ -54,6 +67,70 @@ class NotificationSettingsPanel(QWidget):
                     "Every context of your kubeconfig is read in the background, "
                     "two at a time. One that is not signed in is left alone for "
                     "longer each time."
+                )
+            )
+        )
+
+        layout.addSpacing(10)
+        layout.addWidget(self._title(self.tr("Kinds shown")))
+        names = {
+            "error": self.tr("Errors of the cluster"),
+            "warning": self.tr("Warnings of the cluster and of the app"),
+            "normal": self.tr("Informative events of the cluster"),
+            "action": self.tr("Confirmations of your actions"),
+            "pod": self.tr("Status of Pods after an action"),
+            "task": self.tr("Finished activities"),
+            "info": self.tr("Updates of the app"),
+        }
+        table = QFrame()
+        table.setObjectName("kindsTable")
+        table.setStyleSheet(
+            "QFrame#kindsTable { border: 1px solid rgba(128, 128, 128, 90);"
+            " border-radius: 8px; }"
+            "QFrame#kindsTable QLabel, QFrame#kindsTable QCheckBox"
+            " { border: 0; }"
+            "QFrame#kindsTable QFrame#kindsRule"
+            " { background: rgba(128, 128, 128, 60); border: 0; }"
+        )
+        grid = QGridLayout(table)
+        grid.setContentsMargins(14, 8, 14, 8)
+        grid.setHorizontalSpacing(0)
+        grid.setVerticalSpacing(0)
+        grid.setColumnStretch(0, 1)
+        center = Qt.AlignmentFlag.AlignCenter
+        for column, text in ((1, self.tr("Show")), (2, self.tr("Tell the system"))):
+            head = self._note(text.upper())
+            head.setAlignment(center)
+            head.setMinimumWidth(120)
+            head.setContentsMargins(0, 4, 0, 8)
+            grid.addWidget(head, 0, column)
+        self.kinds: dict[str, QCheckBox] = {}  # listed and counted
+        self.told: dict[str, QCheckBox] = {}  # told to the operating system
+        for row, (kind, name) in enumerate(names.items(), start=1):
+            rule = QFrame()
+            rule.setObjectName("kindsRule")
+            rule.setFixedHeight(1)
+            grid.addWidget(rule, row * 2 - 1, 0, 1, 3)
+            label = QLabel(name)
+            label.setMinimumHeight(36)
+            grid.addWidget(label, row * 2, 0)
+            self.kinds[kind] = QCheckBox()
+            self.told[kind] = QCheckBox()
+            grid.addWidget(self.kinds[kind], row * 2, 1, center)
+            grid.addWidget(self.told[kind], row * 2, 2, center)
+        layout.addWidget(table)
+        reset_row = QHBoxLayout()
+        self.reset = QPushButton(self.tr("Restore the defaults"))
+        self.reset.setProperty("variant", "secondary")  # the buttons of the app
+        self.reset.clicked.connect(self._reset_kinds)
+        reset_row.addWidget(self.reset)
+        reset_row.addStretch(1)
+        layout.addLayout(reset_row)
+        layout.addWidget(
+            self._note(
+                self.tr(
+                    "A kind that is off is not listed, counted in the bell nor "
+                    "told to the system; it is kept, and comes back when turned on."
                 )
             )
         )
@@ -111,7 +188,7 @@ class NotificationSettingsPanel(QWidget):
             )
         )
         layout.addStretch(1)
-        self._fill(DEFAULT)
+        self.interval.setValue(DEFAULT)
 
     @staticmethod
     def _note(text: str) -> QLabel:
@@ -128,35 +205,22 @@ class NotificationSettingsPanel(QWidget):
         label.setProperty("variant", "cardTitle")
         return label
 
-    def _choices(self) -> list[tuple[str, int]]:
-        return [
-            (self.tr("15 seconds"), 15),
-            (self.tr("30 seconds"), 30),
-            (self.tr("1 minute"), 60),
-            (self.tr("2 minutes"), 120),
-            (self.tr("5 minutes"), 300),
-            (self.tr("15 minutes"), 900),
-            (self.tr("1 hour"), 3600),
-        ]
-
-    def _fill(self, chosen: int) -> None:
-        """List the usual times and select `chosen`; a time kept by an older
-        version that is not one of them is listed too, so nothing is lost."""
-        self.interval.clear()
-        for label, seconds in self._choices():
-            self.interval.addItem(label, seconds)
-        if self.interval.findData(chosen) < 0:
-            self.interval.addItem(
-                self.tr("{seconds} seconds").format(seconds=chosen), chosen
-            )
-        self.interval.setCurrentIndex(self.interval.findData(chosen))
+    def _reset_kinds(self) -> None:
+        """Mark the kinds as they are by default; what is kept is what Save
+        writes, as with the rest of the section."""
+        for kind in self.kinds:
+            self.kinds[kind].setChecked(kind not in HIDDEN)
+            self.told[kind].setChecked(kind not in SILENT)
 
     def _window_toggled(self, on: bool) -> None:
         self.start.setEnabled(on)
         self.end.setEnabled(on)
 
     def load(self) -> None:
-        self._fill(self.settings.interval)
+        self.interval.setValue(self.settings.interval)
+        for kind in self.kinds:
+            self.kinds[kind].setChecked(kind in self.settings.shown)
+            self.told[kind].setChecked(kind in self.settings.told)
         self.system.setChecked(self.settings.system_notifications)
         self.window_on.setChecked(self.settings.window_enabled)
         self.start.setTime(QTime.fromString(self.settings.window_start, "HH:mm"))
@@ -165,7 +229,14 @@ class NotificationSettingsPanel(QWidget):
         self.ignored.setPlainText("\n".join(self.settings.ignored))
 
     def save(self) -> bool:
-        self.settings.interval = self.interval.currentData()
+        self.interval.interpretText()  # what is typed and not yet confirmed
+        self.settings.interval = self.interval.value()
+        self.settings.shown = [
+            kind for kind, box in self.kinds.items() if box.isChecked()
+        ]
+        self.settings.told = [
+            kind for kind, box in self.told.items() if box.isChecked()
+        ]
         self.settings.system_notifications = self.system.isChecked()
         self.settings.window_enabled = self.window_on.isChecked()
         self.settings.window_start = self.start.time().toString("HH:mm")

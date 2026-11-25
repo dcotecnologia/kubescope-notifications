@@ -331,3 +331,71 @@ def test_the_bell_takes_the_colors_of_the_theme_like_the_settings_button() -> No
     assert "#0d315d" not in sheet and "#1f4f87" not in sheet  # not the light ones
     bell.restyle(lambda color, text: "#abcdef")  # the theme changed
     assert bell.styleSheet().count("#abcdef") == 2
+
+
+def press(widget: QWidget, position, kind=None) -> None:
+    """A click of the left button on a widget, at a place of the screen."""
+    from PySide6.QtCore import QEvent, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+    from PySide6.QtWidgets import QApplication
+
+    event = QMouseEvent(
+        kind or QEvent.Type.MouseButtonPress,
+        QPointF(widget.mapFromGlobal(position)),
+        QPointF(position),
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    QApplication.sendEvent(widget, event)
+
+
+def test_a_click_outside_closes_the_panel_but_not_one_inside_or_on_the_bell() -> None:
+    from PySide6.QtCore import QEvent, QPoint
+    from PySide6.QtWidgets import QPushButton
+
+    host = QWidget()
+    host.resize(900, 600)
+    other = QWidget(host)
+    other.setGeometry(0, 0, 300, 600)
+    bell = QPushButton(host)
+    bell.setGeometry(800, 0, 40, 40)
+    panel = make_panel(host)
+    panel.is_inside = lambda position: bell.rect().contains(
+        bell.mapFromGlobal(position)
+    )
+    closed: list[bool] = []
+    panel.on_closed = lambda: closed.append(True)
+    host.show()
+    panel.open_panel()
+    panel.animation.setCurrentTime(panel.animation.duration())
+    panel.animation.finished.emit()
+
+    press(panel, panel.mapToGlobal(QPoint(20, 100)))  # on the panel
+    press(bell, bell.mapToGlobal(QPoint(5, 5)))  # on the bell: it closes itself
+    press(other, other.mapToGlobal(QPoint(20, 100)), QEvent.Type.MouseButtonRelease)
+    assert panel.opened and closed == []
+
+    press(other, other.mapToGlobal(QPoint(20, 100)))  # on the rest of the window
+
+    assert not panel.opened and closed == [True]
+    press(other, other.mapToGlobal(QPoint(20, 100)))  # closed: nothing more to close
+    assert closed == [True]
+
+
+def test_a_click_of_another_window_is_not_a_click_outside() -> None:
+    from PySide6.QtCore import QPoint
+
+    host = QWidget()
+    host.resize(900, 600)
+    panel = make_panel(host)
+    elsewhere = QWidget()  # a window of its own
+    host.show()
+    elsewhere.show()
+    panel.open_panel()
+
+    press(elsewhere, elsewhere.mapToGlobal(QPoint(5, 5)))
+
+    assert panel.opened
+    panel.close_panel()
+    elsewhere.close()

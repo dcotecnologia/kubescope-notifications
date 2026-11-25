@@ -10,7 +10,8 @@ readable only by the person.
 
 import json
 import os
-from collections.abc import Callable
+import time
+from collections.abc import Callable, Collection
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
@@ -20,9 +21,13 @@ from kubescope.notifications.auth import is_auth_error
 
 LIMIT = 500  # the notifications kept; the oldest go first
 DISMISSED_LIMIT = 2000  # alerts remembered as cleared; the oldest are forgotten
+# an alert that keeps happening is one notification; it is a new one only when
+# it comes back after being quiet for this long (seconds)
+QUIET = 3600.0
 ERROR = "error"
 WARNING = "warning"
 INFO = "info"  # an update of the app
+NORMAL = "normal"  # an informative event of the cluster
 APP = "app"  # where a notice of the app came from, as the cluster is "cluster"
 CLUSTER = "cluster"
 LEVELS = (ERROR, WARNING, INFO)
@@ -64,10 +69,22 @@ class Notification:
     last_seen: float
     source: str = CLUSTER
     read_at: float = 0.0  # when the person read this one, by clicking it
+    category: str = ""  # of a notice of something done: action, pod or task
+    noticed: float = 0.0  # when it was first told here, which says if it is new
+
+
+def kind_of(item: Notification) -> str:
+    """What kind of notification it is, the one the person turns on and off:
+
+    the category of a notice of something done, else its level.
+    """
+    return item.category or item.level
 
 
 def level_of(event: ClusterEvent) -> str:
     """`error` when the reason of the event says something failed."""
+    if event.type == "Normal":
+        return NORMAL
     return ERROR if event.reason in ERROR_REASONS else WARNING
 
 
@@ -109,9 +126,10 @@ class NotificationStore:
     """The notifications of every context, in a JSON file, and when the person
     last looked at them."""
 
-    def __init__(self, path: Path, limit: int = LIMIT) -> None:
+    def __init__(self, path: Path, limit: int = LIMIT, quiet: float = QUIET) -> None:
         self.path = path
         self.limit = limit
+        self.quiet = quiet
         self._items: dict[str, Notification] = {}
         # the alerts the person cleared, and the time of the last one cleared:
         # they come back only when they happen again after that
@@ -179,6 +197,7 @@ class NotificationStore:
         moment: float,
         context: str = "",
         window: float = 0.0,
+        category: str = "",
     ) -> bool:
         """Add a notice of the app itself: an error, a warning or an update.
 
@@ -217,6 +236,8 @@ class NotificationStore:
             first_seen=before.first_seen if before else moment,
             last_seen=moment,
             source=APP,
+            category=category,
+            noticed=moment,
         )
         self._trim()
         self.save()
@@ -260,39 +281,100 @@ class NotificationStore:
             self._items = {one.key: one for one in newest}
 
     def merge_changes(
-        self, context: str, events: list[ClusterEvent]
+        self,
+        context: str,
+        events: list[ClusterEvent],
+        moment: float | None = None,
     ) -> list[Notification]:
         """Add what the events of `context` bring; the notifications that are
-        new or that happened again, whether or not the person looked."""
+        new, or that came back after being quiet for a while.
+
+        An alert that keeps happening (an autoscaler that fails every
+        few seconds) is one notification: its count and last time move
+        on, and it is neither unread again nor told again. One the
+        person cleared stays away while it goes on.
+        """
         changed: list[Notification] = []
+        moment = time.time() if moment is None else moment
         for event in events:
             item = notification_of(context, event)
             cleared = self._dismissed.get(item.key)
             if cleared is not None:
-                if item.last_seen <= cleared:
-                    continue  # the one the person cleared, still in the cluster
+                if item.last_seen - cleared < self.quiet:
+                    # the one the person cleared, still going on: it stays away
+                    # until it has been quiet for a while
+                    self._dismissed[item.key] = max(cleared, item.last_seen)
+                    continue
                 del self._dismissed[item.key]  # it happened again
             before = self._items.get(item.key)
-            if before is None or item.last_seen > before.last_seen:
+            if before is None:
+                item = replace(item, noticed=moment)
                 changed.append(item)
                 self._items[item.key] = item
+            elif item.last_seen - before.last_seen >= self.quiet:
+                # back after a quiet time: a new occurrence, which began now
+                again = replace(item, first_seen=item.last_seen, noticed=moment)
+                changed.append(again)
+                self._items[item.key] = again
+            elif item.last_seen > before.last_seen:  # still going on
+                self._items[item.key] = replace(
+                    before,
+                    count=item.count,
+                    last_seen=item.last_seen,
+                    message=item.message,
+                )
         self._trim()
         self.save()
         return changed
 
-    def merge(self, context: str, events: list[ClusterEvent]) -> int:
+    def prune(
+        self,
+        context: str,
+        events: list[ClusterEvent],
+        levels: Collection[str] = (ERROR, WARNING, NORMAL),
+    ) -> int:
+        """Take away the notifications of `context` whose event is not in the
+        cluster any more, given every event it has now of the `levels` that
+        were read; how many went."""
+        present = {notification_of(context, event).key for event in events}
+        gone = [
+            key
+            for key, one in self._items.items()
+            if one.source == CLUSTER
+            and one.context == context
+            and one.level in levels
+            and key not in present
+        ]
+        for key in gone:
+            del self._items[key]
+        if gone:
+            self.save()
+        return len(gone)
+
+    def merge(
+        self,
+        context: str,
+        events: list[ClusterEvent],
+        moment: float | None = None,
+    ) -> int:
         """Add what the events of `context` bring; the number of notifications
         that are new or that happened again since the person looked."""
-        changed = self.merge_changes(context, events)
-        return sum(1 for item in changed if item.last_seen > self.read_until)
+        changed = self.merge_changes(context, events, moment)
+        return sum(1 for item in changed if item.noticed > self.read_until)
 
     def items(self) -> list[Notification]:
-        """Every notification, the newest first."""
-        return sorted(self._items.values(), key=lambda one: one.last_seen, reverse=True)
+        """Every notification, the one that began last first."""
+        return sorted(
+            self._items.values(), key=lambda one: one.first_seen, reverse=True
+        )
 
     def is_unread(self, item: Notification) -> bool:
-        """Whether it happened, or happened again, after it was read."""
-        return item.last_seen > max(self.read_until, item.read_at)
+        """Whether it came after it was read: going on is not news.
+
+        What counts is when it was first told here, not when the event
+        began, so a new notification of an old event is new.
+        """
+        return (item.noticed or item.first_seen) > max(self.read_until, item.read_at)
 
     def mark_item_read(self, key: str, moment: float) -> None:
         """The person read one notification."""

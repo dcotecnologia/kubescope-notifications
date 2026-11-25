@@ -17,6 +17,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QKeySequence, QMouseEvent, QShortcut
 from PySide6.QtWidgets import (
+    QApplication,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -26,7 +27,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope.notifications.store import ERROR, INFO, Notification
+from kubescope.notifications.store import ERROR, INFO, NORMAL, Notification
 
 WIDTH = 400  # the usual width, which can be dragged
 MIN_WIDTH = 300
@@ -68,7 +69,7 @@ QFrame#notificationCard {{
 QFrame#notificationCard[level="error"] {{
     border-left: 3px solid {themed("#a33d45", False)};
 }}
-QFrame#notificationCard[level="info"] {{
+QFrame#notificationCard[level="info"], QFrame#notificationCard[level="normal"] {{
     border-left: 3px solid {themed("#3220a0", False)};
 }}
 QFrame#notificationCard[level="warning"] {{
@@ -80,8 +81,10 @@ QLabel#notificationReason {{
 QLabel#notificationMessage {{ color: {themed("#20232a", True)}; }}
 QFrame#notificationCard[read="false"] {{
     background: {themed("#eee9f7", False)};
-    border-color: {themed("#b9b3dc", False)};
-}}
+    border-top-color: {themed("#b9b3dc", False)};
+    border-right-color: {themed("#b9b3dc", False)};
+    border-bottom-color: {themed("#b9b3dc", False)};
+}}  /* the left edge keeps the color of the level */
 QFrame#notificationCard[read="true"] QLabel {{
     color: {themed("#6b7380", True)};
 }}
@@ -127,6 +130,7 @@ class Card(QFrame):
         now: float,
         opened: Callable[[Notification], None] = lambda _item: None,
         unread: bool = True,
+        visit: Callable[[Notification], None] = lambda _item: None,
     ) -> None:
         super().__init__()
         self.item = item
@@ -135,14 +139,8 @@ class Card(QFrame):
         self.setObjectName("notificationCard")
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setProperty("read", "false" if unread else "true")
-        # a click reads it, and goes to the context when it is about one
-        self.setToolTip(
-            QCoreApplication.translate(
-                "NotificationPanel", "Open the context {context}"
-            ).format(context=item.context)
-            if item.context
-            else QCoreApplication.translate("NotificationPanel", "Mark as read")
-        )
+        # a click reads it, and nothing else
+        self.setToolTip(QCoreApplication.translate("NotificationPanel", "Mark as read"))
         self.setProperty("level", item.level)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 9, 12, 9)
@@ -156,6 +154,7 @@ class Card(QFrame):
         level = {
             ERROR: QCoreApplication.translate("NotificationPanel", "Error"),
             INFO: QCoreApplication.translate("NotificationPanel", "Info"),
+            NORMAL: QCoreApplication.translate("NotificationPanel", "Info"),
         }.get(item.level, QCoreApplication.translate("NotificationPanel", "Warning"))
         kind = QLabel(level)
         kind.setObjectName("notificationMeta")
@@ -182,9 +181,29 @@ class Card(QFrame):
         message.setWordWrap(True)
         layout.addWidget(message)
         times = f"{item.count}× · " if item.count > 1 else ""
-        when = QLabel(times + ago(now - item.last_seen))
+        when = QLabel(times + ago(now - item.first_seen))  # how long ago it began
         when.setObjectName("notificationMeta")
         layout.addWidget(when)
+        actions = QHBoxLayout()
+        actions.setSpacing(10)
+        self.read_button = QPushButton(
+            QCoreApplication.translate("NotificationPanel", "Mark as read")
+        )
+        self.visit_button = QPushButton(
+            QCoreApplication.translate("NotificationPanel", "Go to context")
+        )
+        self.read_button.clicked.connect(lambda: opened(item))
+        self.visit_button.clicked.connect(lambda: visit(item))
+        for button in (self.read_button, self.visit_button):
+            button.setProperty("variant", "link")  # small, quiet
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+            button.setStyleSheet("font-size: 11px; padding: 0;")
+            actions.addWidget(button)
+        actions.addStretch(1)
+        self.read_button.setVisible(unread)
+        self.visit_button.setVisible(bool(item.context))
+        if unread or item.context:
+            layout.addLayout(actions)
         for label in self.findChildren(QLabel):  # the click is the card's
             label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         if not unread:  # read: crossed out
@@ -226,6 +245,10 @@ class NotificationPanel(QFrame):
         self.on_mark_read: Callable[[], None] = lambda: None
         self.on_resized: Callable[[int], None] = lambda width: None
         self.on_open: Callable[[Notification], None] = lambda item: None
+        self.on_visit: Callable[[Notification], None] = lambda item: None
+        # a place on the screen that belongs to the panel's own button: a click
+        # there is not a click outside, which would close the panel
+        self.is_inside: Callable[[QPoint], bool] = lambda position: False
         self.is_unread: Callable[[Notification], bool] = lambda item: True
 
         layout = QVBoxLayout(self)
@@ -308,7 +331,13 @@ class NotificationPanel(QFrame):
             self.rows.addWidget(empty)
         for item in items[:SHOWN]:
             self.rows.addWidget(
-                Card(item, now, lambda one: self.on_open(one), self.is_unread(item))
+                Card(
+                    item,
+                    now,
+                    lambda one: self.on_open(one),
+                    self.is_unread(item),
+                    lambda one: self.on_visit(one),
+                )
             )
         self.rows.addStretch(1)
         self._place = place if place else None  # given back once the list is long
@@ -357,6 +386,9 @@ class NotificationPanel(QFrame):
         shown, hidden = self._geometry()
         self.opened = True
         self._escape.setEnabled(True)
+        app = QApplication.instance()
+        if app is not None:  # a click anywhere else of the window closes it
+            app.installEventFilter(self)
         self.move(hidden)
         self.show()
         self.raise_()
@@ -371,6 +403,9 @@ class NotificationPanel(QFrame):
         shown, hidden = self._geometry()
         self.opened = False
         self._escape.setEnabled(False)
+        app = QApplication.instance()
+        if app is not None:
+            app.removeEventFilter(self)
         self.animation.stop()
         self.animation.setStartValue(self.pos())
         self.animation.setEndValue(hidden)
@@ -382,7 +417,23 @@ class NotificationPanel(QFrame):
             self.hide()
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
-        """Follow the window as it is resized."""
+        """Follow the window as it is resized, and close the panel when a click
+        of the window falls outside of it."""
+        if (
+            self.opened
+            and event.type() == QEvent.Type.MouseButtonPress
+            and isinstance(watched, QWidget)
+            and watched.window() is self.window()
+            and isinstance(event, QMouseEvent)
+        ):
+            position = event.globalPosition().toPoint()
+            # a press that nothing takes goes up to the parent, which this sees too:
+            # it is the place of the click that says where it was, and what is
+            # inside the panel (its grip and its cards) is the panel's own
+            own = watched is self or self.isAncestorOf(watched)
+            inside = self.rect().contains(self.mapFromGlobal(position))
+            if not own and not inside and not self.is_inside(position):
+                self.close_panel()
         if (
             watched is self.host
             and event.type() == QEvent.Type.Resize

@@ -1,6 +1,6 @@
 [project]
 name = "kubescope-notifications"
-version = "1.1.0"
+version = "1.2.0"
 description = "Notifications for KubeScope: the Warning and Error events of the cluster, cached and listed in a panel"
 readme = "README.md"
 license = "MIT"

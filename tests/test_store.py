@@ -42,10 +42,16 @@ def test_a_repeated_event_is_one_notification_that_moves_on(
 
     assert store.merge("prod", [make_event(last_seen=100.0)]) == 1
     assert store.merge("prod", [make_event(last_seen=100.0)]) == 0  # nothing new
-    assert store.merge("prod", [make_event(last_seen=200.0, count=3)]) == 1
+    # it goes on: the count and the last time move, and it is not news
+    assert store.merge("prod", [make_event(last_seen=200.0, count=3)]) == 0
 
     (only,) = store.items()
-    assert (only.count, only.last_seen) == (3, 200.0)
+    assert (only.count, only.first_seen, only.last_seen) == (3, 100.0, 200.0)
+
+    # back after more than the quiet time: it is news, and began now
+    assert store.merge("prod", [make_event(last_seen=5000.0, count=4)]) == 1
+    (only,) = store.items()
+    assert (only.count, only.first_seen, only.last_seen) == (4, 5000.0, 5000.0)
 
 
 def test_the_newest_come_first_and_the_oldest_go_when_there_are_too_many(
@@ -64,13 +70,20 @@ def test_the_newest_come_first_and_the_oldest_go_when_there_are_too_many(
 
 def test_what_was_read_is_not_unread_again(tmp_path, make_event) -> None:
     store = NotificationStore(tmp_path / "n.json")
-    store.merge("prod", [make_event("a", last_seen=10.0)])
+    store.merge("prod", [make_event("a", last_seen=10.0)], 10.0)
     assert store.unread() == 1
 
     store.mark_read(50.0)
     assert store.unread() == 0
-    assert store.merge("prod", [make_event("a", last_seen=20.0)]) == 0  # seen before
-    assert store.merge("prod", [make_event("a", last_seen=60.0)]) == 1
+    assert (
+        store.merge("prod", [make_event("a", last_seen=20.0)], 20.0) == 0
+    )  # seen before
+    assert store.merge("prod", [make_event("a", last_seen=60.0)], 60.0) == 0  # going on
+    assert store.unread() == 0
+    assert (
+        store.merge("prod", [make_event("a", last_seen=9000.0)], 9000.0) == 1
+    )  # came back
+    assert store.unread() == 1
 
 
 def test_it_is_kept_between_runs_and_only_the_person_reads_the_file(
@@ -212,7 +225,7 @@ def test_the_width_of_the_panel_is_kept_between_what_is_usable() -> None:
 def test_the_changes_are_the_notifications_that_are_new_or_happened_again(
     tmp_path, make_event
 ) -> None:
-    store = NotificationStore(tmp_path / "n.json")
+    store = NotificationStore(tmp_path / "n.json", quiet=3.0)
 
     first = store.merge_changes("prod", [make_event("a", last_seen=5.0)])
     again = store.merge_changes("prod", [make_event("a", last_seen=5.0)])
@@ -237,7 +250,7 @@ def test_a_notice_of_the_app_may_name_its_context_and_be_taken_away(tmp_path) ->
 def test_an_event_made_again_for_the_same_thing_is_the_same_alert(
     tmp_path, make_event
 ) -> None:
-    store = NotificationStore(tmp_path / "n.json")
+    store = NotificationStore(tmp_path / "n.json", quiet=30.0)
 
     store.merge_changes("prod", [make_event("first", name="api", last_seen=10.0)])
     again = store.merge_changes(
@@ -315,7 +328,7 @@ def test_what_was_cleared_does_not_come_back_with_the_next_look(
 
 
 def test_a_cleared_alert_comes_back_when_it_happens_again(tmp_path, make_event) -> None:
-    store = NotificationStore(tmp_path / "n.json")
+    store = NotificationStore(tmp_path / "n.json", quiet=60.0)
     store.merge_changes("prod", [make_event("a", name="api", last_seen=100.0)])
     store.clear()
 
@@ -444,3 +457,46 @@ def test_the_window_and_the_ignore_list_of_the_settings() -> None:
     assert settings.in_window(3 * 60)  # an empty window is no window
     kept["ignored"] = "Pod/*"
     assert settings.ignored == []
+
+
+def test_a_cleared_alert_that_goes_on_stays_away(tmp_path, make_event) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+    store.merge_changes("prod", [make_event("a", name="api", last_seen=100.0)])
+    store.clear()
+
+    for moment in (110.0, 2000.0, 3900.0, 5500.0):  # every look finds it newer
+        again = store.merge_changes(
+            "prod", [make_event("a", name="api", last_seen=moment)]
+        )
+        assert again == [] and store.items() == []
+
+    back = store.merge_changes("prod", [make_event("a", name="api", last_seen=9500.0)])
+    assert len(back) == 1  # an hour of silence, then it happened again
+
+
+def test_what_is_gone_from_the_cluster_is_taken_away(tmp_path, make_event) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+    store.merge_changes(
+        "prod", [make_event("a", name="api"), make_event("b", name="web")]
+    )
+    store.merge_changes("dev", [make_event("c", name="db")])
+    store.add_notice("info", "t", "m", "k", False, 1.0)
+
+    assert store.prune("prod", [make_event("b", name="web")]) == 1
+    assert store.prune("prod", [make_event("b", name="web")]) == 0
+
+    names = sorted(item.name for item in store.items())
+    assert names == ["", "db", "web"]  # api is gone; other context and notice stay
+
+
+def test_a_new_notification_of_an_old_event_is_unread(tmp_path, make_event) -> None:
+    store = NotificationStore(tmp_path / "n.json")
+    store.mark_read(5000.0)  # the person read everything a moment ago
+
+    # the event began long before, but it is the first time it is told here
+    store.merge_changes("prod", [make_event("a", last_seen=100.0)], 5100.0)
+
+    (item,) = store.items()
+    assert item.noticed == 5100.0 and store.is_unread(item)
+    store.mark_item_read(item.key, 5200.0)
+    assert not store.is_unread(store.items()[0])

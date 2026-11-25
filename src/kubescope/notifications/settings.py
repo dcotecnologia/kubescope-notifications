@@ -14,6 +14,14 @@ MAX_WIDTH = 900
 DEFAULT_START = "08:00"  # the window in which the system is told, when it is on
 DEFAULT_END = "20:00"
 MAX_IGNORED = 200
+# the kinds of notification there are: the levels of the cluster and the app, the
+# informative events, and what the app tells of something done
+OLD_KINDS = ("error", "warning", "info", "normal")  # when `shown` was kept
+KINDS = ("error", "warning", "info", "normal", "action", "pod", "task")
+# what is off unless the person turns it on: only the errors of the cluster, the
+# state of a Pod after an action and the updates of the app are on
+HIDDEN = ("warning", "normal", "action", "task")
+SILENT = ("warning", "normal", "action", "task")
 _CLOCK = re.compile(r"([01]\d|2[0-3]):([0-5]\d)")
 
 
@@ -143,3 +151,33 @@ class NotificationSettings:
     def ignored(self, value: list[str]) -> None:
         kept = [line.strip() for line in value if line.strip()]
         self._store.set("ignored", kept[:MAX_IGNORED])
+
+    def _kinds(self, off: str, default: tuple[str, ...]) -> list[str]:
+        """Every kind but the ones stored under `off`; a kind added by a later
+        version is on, as the person has not been asked about it."""
+        value = self._store.get(off, list(default))
+        if not isinstance(value, list):
+            value = list(default)
+        return [kind for kind in KINDS if kind not in value]
+
+    @property
+    def shown(self) -> list[str]:
+        """The kinds of notification that are listed and counted."""
+        old = self._store.get("shown")
+        if self._store.get("hidden") is None and isinstance(old, list):
+            # kept by an earlier version as the ones that were on
+            return [kind for kind in KINDS if kind in old or kind not in OLD_KINDS]
+        return self._kinds("hidden", HIDDEN)
+
+    @shown.setter
+    def shown(self, value: list[str]) -> None:
+        self._store.set("hidden", [kind for kind in KINDS if kind not in value])
+
+    @property
+    def told(self) -> list[str]:
+        """The kinds the operating system is told about."""
+        return self._kinds("silent", SILENT)
+
+    @told.setter
+    def told(self, value: list[str]) -> None:
+        self._store.set("silent", [kind for kind in KINDS if kind not in value])

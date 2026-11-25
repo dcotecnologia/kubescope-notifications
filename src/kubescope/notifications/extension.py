@@ -21,7 +21,14 @@ from kubescope.notifications.panel import NotificationPanel
 from kubescope.notifications.reader import Backoff, read_all
 from kubescope.notifications.settings import NotificationSettings, ignored_by
 from kubescope.notifications.settings_panel import NotificationSettingsPanel
-from kubescope.notifications.store import ERROR, INFO, Notification, NotificationStore
+from kubescope.notifications.store import (
+    ERROR,
+    NORMAL,
+    WARNING,
+    Notification,
+    NotificationStore,
+    kind_of,
+)
 
 TITLE = "Notifications"
 GAP = 6  # between the top bar and the panel
@@ -72,7 +79,11 @@ class Notifications(QObject):
         self.panel.on_closed = lambda: self.bell.setChecked(False)
         self.panel.on_mark_read = self.mark_read
         self.panel.on_clear = self.clear
-        self.panel.on_open = self.open_context
+        self.panel.on_open = self.read_item  # a click on a card only reads it
+        self.panel.on_visit = self.open_context  # reads it and goes to its context
+        self.panel.is_inside = lambda position: self.bell.rect().contains(
+            self.bell.mapFromGlobal(position)
+        )  # the bell opens and closes it itself
         self.panel.is_unread = self.store.is_unread
         self.panel.on_resized = lambda width: setattr(
             self.settings, "panel_width", width
@@ -118,9 +129,14 @@ class Notifications(QObject):
             self._arrived,
             self.ctx.cluster,
             skip,
+            self._types(),
             on_error=lambda _reason: self._failed(),
             quiet=True,
         )
+
+    def _types(self) -> tuple[str, ...]:
+        """The types of event to read: the informative ones only when asked."""
+        return ("Warning", "Normal") if NORMAL in self.settings.shown else ("Warning",)
 
     def _failed(self) -> None:
         self._busy = False
@@ -169,7 +185,14 @@ class Notifications(QObject):
                     self.settings.ignored, context, event.kind, event.name
                 )
             ]
-            news += self.store.merge_changes(context, wanted)
+            self.store.prune(
+                context,
+                wanted,
+                (ERROR, WARNING, NORMAL)
+                if "Normal" in self._types()
+                else (ERROR, WARNING),
+            )  # what the cluster no longer has
+            news += self.store.merge_changes(context, wanted, self._now())
         self.refresh()
         self.announce([item for item in news if item.last_seen >= self._since])
 
@@ -179,6 +202,10 @@ class Notifications(QObject):
         ui = self.ctx.ui
         if not items or ui is None or not self.settings.system_notifications:
             return
+        shown, told = self.settings.shown, self.settings.told
+        items = [one for one in items if kind_of(one) in shown and kind_of(one) in told]
+        if not items:
+            return  # a kind the person does not want to see or be told
         now = self._now()
         moment = datetime.fromtimestamp(now)
         if not self.settings.in_window(moment.hour * 60 + moment.minute):
@@ -214,9 +241,34 @@ class Notifications(QObject):
             click = partial(self.open_context, items[0])
         ui.show_system_notification(title, message[:MESSAGE_LIMIT], click)
 
+    def tell(self, item: Notification, click: Callable[[], None] | None) -> None:
+        """Tell the system about something the app did, if the person wants
+        that kind told, the system is on and it is within the hours chosen."""
+        ui = self.ctx.ui
+        kind = kind_of(item)
+        if (
+            ui is None
+            or not self.settings.system_notifications
+            or kind not in self.settings.shown
+            or kind not in self.settings.told
+        ):
+            return
+        moment = datetime.fromtimestamp(self._now())
+        if not self.settings.in_window(moment.hour * 60 + moment.minute):
+            return
+        ui.show_system_notification(
+            item.reason, item.message[:MESSAGE_LIMIT], click or self.open_panel
+        )
+
+    def read_item(self, item: Notification) -> None:
+        """The person clicked a card of the panel: it is read, and the panel
+        stays as it is."""
+        self.store.mark_item_read(item.key, self._now())
+        self.refresh()
+
     def open_context(self, item: Notification) -> None:
         """Read a notification and go to the context it belongs to, if it is
-        about one, leaving the panel."""
+        about one, leaving the panel; what a notice of the system leads to."""
         self.store.mark_item_read(item.key, self._now())  # clicking reads it
         self.refresh()
         ui = self.ctx.ui
@@ -235,15 +287,21 @@ class Notifications(QObject):
         if not self.panel.opened:
             self.toggle()
 
+    def visible(self) -> list[Notification]:
+        """The notifications of the kinds the person wants to see."""
+        shown = self.settings.shown
+        return [item for item in self.store.items() if kind_of(item) in shown]
+
     def refresh(self) -> None:
-        self.bell.set_unread(self.store.unread())
-        self.panel.show_items(self.store.items(), self._now())
+        items = self.visible()
+        self.bell.set_unread(sum(1 for item in items if self.store.is_unread(item)))
+        self.panel.show_items(items, self._now())
 
     def toggle(self) -> None:
         if self.panel.opened:
             self.panel.close_panel()
             return
-        self.panel.show_items(self.store.items(), self._now())
+        self.panel.show_items(self.visible(), self._now())
         self.panel.open_panel()
         self.bell.setChecked(True)
 
@@ -255,9 +313,16 @@ class Notifications(QObject):
         key: str,
         repeat: bool = False,
         context: str = "",
+        category: str = "",
+        click: Callable[[], None] | None = None,
+        system: bool = False,
     ) -> None:
-        """The app tells about an error, a warning or an update, and the
-        context it is about when it is about one."""
+        """The app tells about an error, a warning, an update or something it
+        did (a `category`), and the context it is about when it is about one.
+
+        A notice of something done is told to the system, with `click`,
+        when its kind is one the person wants told.
+        """
         now = self._now()
         if (
             level == ERROR
@@ -266,11 +331,16 @@ class Notifications(QObject):
         ):
             return  # the context that cannot be read says it already
         if self.store.add_notice(
-            level, title, message, key, repeat, now, context, REPEAT_WINDOW
+            level, title, message, key, repeat, now, context, REPEAT_WINDOW, category
         ):
             self.refresh()
             item = self.store.find(key)
-            if level != INFO and item is not None:  # the app tells of an update
+            if item is None:
+                return
+            if category:
+                if system:
+                    self.tell(item, click)
+            else:
                 self.announce([item])
 
     def mark_read(self) -> None:

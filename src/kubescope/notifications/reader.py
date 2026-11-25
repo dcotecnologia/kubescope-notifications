@@ -54,19 +54,18 @@ class Backoff:
 
 
 def read_all(
-    reader: Reader, skip: Collection[str]
+    reader: Reader, skip: Collection[str], types: tuple[str, ...] = ("Warning",)
 ) -> tuple[list[str], dict[str, list[ClusterEvent] | str]]:
-    """Every context of the kubeconfig, and the Warning events of each one that
-    is not skipped; what could not be read is the reason, as text."""
+    """Every context of the kubeconfig, and the events of the `types` (Warning
+    by default) of each one that is not skipped; what could not be read is the
+    reason, as text."""
     contexts = reader.list_contexts()
     due = [name for name in contexts if name not in skip]
     found: dict[str, list[ClusterEvent] | str] = {}
     if not due:
         return contexts, found
     with ThreadPoolExecutor(max_workers=min(WORKERS, len(due))) as pool:
-        futures = {
-            name: pool.submit(reader.get_events, name, ("Warning",)) for name in due
-        }
+        futures = {name: pool.submit(reader.get_events, name, types) for name in due}
         for name, future in futures.items():
             try:
                 found[name] = future.result()
