@@ -985,3 +985,29 @@ def test_the_kinds_can_be_put_back_to_the_defaults(ctx) -> None:
     assert ctx.settings["hidden"] == []  # nothing is kept until it is saved
     panel.save()
     assert ctx.settings["hidden"] == ["warning", "normal", "action", "task"]
+
+
+def test_a_notice_of_the_app_is_not_told_outside_the_window(ctx) -> None:
+    from datetime import datetime
+
+    notifications = build(ctx)
+    hour = (datetime.fromtimestamp(2000.0).hour + 2) % 24
+    ctx.settings["window_enabled"] = True
+    ctx.settings["window_start"] = f"{hour:02d}:00"
+    ctx.settings["window_end"] = f"{(hour + 1) % 24:02d}:00"
+
+    notifications.notice("info", "Scaled", "done", "k", category="action", system=True)
+
+    assert ctx.ui.system == []
+    assert len(notifications.store.items()) == 1  # kept in the bell all the same
+
+
+def test_a_notice_the_store_cannot_find_again_is_left_as_it_is(
+    ctx, monkeypatch
+) -> None:
+    notifications = build(ctx)
+    monkeypatch.setattr(notifications.store, "find", lambda _key: None)
+
+    notifications.notice("info", "Scaled", "done", "k", category="action", system=True)
+
+    assert ctx.ui.system == []
